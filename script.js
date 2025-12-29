@@ -209,6 +209,9 @@ function escapeHtml(text) {
 // Helper function to format date
 function formatDate(dateString) {
     const date = new Date(dateString);
+    if (isNaN(date.getTime())) {
+        return dateString; // Return original string if invalid
+    }
     return date.toLocaleDateString('ru-RU', {
         year: 'numeric',
         month: 'long',
