@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>X-Ray - DOZ3 Report Generator</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>X-Ray DOZ3 Report Generator</h1>
+            <p class="subtitle">Генератор отчетов ДОЗ-3</p>
+        </header>
+
+        <main>
+            <section class="form-section">
+                <h2>Создание отчета</h2>
+                
+                <form id="reportForm">
+                    <div class="form-group">
+                        <label for="patientName">ФИО пациента:</label>
+                        <input type="text" id="patientName" name="patientName" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="patientId">Номер пациента:</label>
+                        <input type="text" id="patientId" name="patientId" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="examDate">Дата обследования:</label>
+                        <input type="date" id="examDate" name="examDate" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="examType">Тип обследования:</label>
+                        <select id="examType" name="examType" required>
+                            <option value="">Выберите тип</option>
+                            <option value="fluorography">Флюорография</option>
+                            <option value="radiography">Рентгенография</option>
+                            <option value="ct">Компьютерная томография</option>
+                            <option value="mammography">Маммография</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="dose">Доза облучения (мЗв):</label>
+                        <input type="number" id="dose" name="dose" step="0.01" min="0" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="bodyPart">Область обследования:</label>
+                        <input type="text" id="bodyPart" name="bodyPart" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="doctor">Врач:</label>
+                        <input type="text" id="doctor" name="doctor" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="notes">Примечания:</label>
+                        <textarea id="notes" name="notes" rows="4"></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Создать отчет</button>
+                    <button type="button" class="btn btn-secondary" id="clearForm">Очистить</button>
+                </form>
+            </section>
+
+            <section class="report-section" id="reportSection" style="display: none;">
+                <h2>Сгенерированный отчет</h2>
+                <div id="reportContent" class="report-content"></div>
+                <div class="report-actions">
+                    <button class="btn btn-primary" id="downloadBtn">Скачать HTML</button>
+                    <button class="btn btn-secondary" id="printBtn">Печать</button>
+                    <button class="btn btn-secondary" id="newReportBtn">Новый отчет</button>
+                </div>
+            </section>
+
+            <section class="info-section">
+                <h2>Информация о ДОЗ-3</h2>
+                <p>Форма ДОЗ-3 используется для регистрации и учета доз облучения пациентов при рентгенологических исследованиях.</p>
+                <p>Основные параметры:</p>
+                <ul>
+                    <li>Данные пациента</li>
+                    <li>Тип и дата исследования</li>
+                    <li>Полученная доза облучения</li>
+                    <li>Область исследования</li>
+                    <li>Ответственный медицинский персонал</li>
+                </ul>
+                <div class="documentation">
+                    <a href="ТЗ ДОЗ 3.pdf" target="_blank" class="btn btn-link">Техническое задание (PDF)</a>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>&copy; 2025 X-Ray DOZ3 Report Generator</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
