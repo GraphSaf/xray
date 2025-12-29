@@ -51,10 +51,9 @@ clearFormBtn.addEventListener('click', function() {
     }
 });
 
-// Download PDF handler
+// Download report handler
 downloadBtn.addEventListener('click', function() {
-    // In a real application, this would generate a PDF
-    // For now, we'll create a simple HTML version
+    // Generate and download the report as an HTML file
     const reportHTML = generateReportHTML(currentReport);
     const blob = new Blob([reportHTML], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
