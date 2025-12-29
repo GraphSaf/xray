@@ -31,6 +31,11 @@ React-приложение для ведения формы №3-ДОЗ "Уче�
 - **TailwindCSS** — стилизация
 - **xlsx** — экспорт в Excel
 
+## 🌐 Live Demo
+
+Приложение развёрнуто на GitHub Pages:
+**https://graphsaf.github.io/xray/**
+
 ## 🚀 Установка и запуск
 
 ```bash
@@ -46,6 +51,20 @@ npm run build
 # Предпросмотр продакшен-сборки
 npm run preview
 ```
+
+### Автоматический деплой на GitHub Pages
+
+Приложение автоматически деплоится на GitHub Pages при каждом push в ветки:
+- `main`
+- `claude/radiation-dose-reporting-app-RM8Cf`
+
+**Настройка GitHub Pages (требуется один раз):**
+
+1. Перейдите в **Settings** → **Pages** вашего репозитория
+2. В разделе **Source** выберите **GitHub Actions**
+3. Сохраните настройки
+
+После этого GitHub Actions автоматически соберёт и задеплоит приложение.
 
 ## 📋 Использование
 
