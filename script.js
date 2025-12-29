@@ -94,7 +94,50 @@ function getExamTypeLabel(examType) {
 
 // Generate report HTML
 function generateReport(data) {
-    const html = `
+    reportContent.innerHTML = generateReportContent(data);
+}
+
+// Generate standalone HTML for download
+function generateReportHTML(data) {
+    const reportHTML = generateReportContent(data);
+    return `
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Отчет ДОЗ-3 - ${escapeHtml(data.patientName)}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        h3 { color: #2563eb; }
+        .report-field {
+            margin: 15px 0;
+            padding: 10px;
+            background-color: #f8fafc;
+            border-left: 4px solid #2563eb;
+        }
+        .report-field strong {
+            display: inline-block;
+            min-width: 200px;
+        }
+    </style>
+</head>
+<body>
+    ${reportHTML}
+</body>
+</html>
+    `.trim();
+}
+
+// Helper to generate report content HTML
+function generateReportContent(data) {
+    return `
         <h3>Отчет ДОЗ-3 - Регистрация дозы облучения</h3>
         
         <div class="report-field">
@@ -154,45 +197,6 @@ function generateReport(data) {
             Этот отчет сгенерирован автоматически системой X-Ray DOZ3 Report Generator.
         </p>
     `;
-    
-    reportContent.innerHTML = html;
-}
-
-// Generate standalone HTML for download
-function generateReportHTML(data) {
-    return `
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Отчет ДОЗ-3 - ${escapeHtml(data.patientName)}</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 40px auto;
-            padding: 20px;
-            line-height: 1.6;
-        }
-        h3 { color: #2563eb; }
-        .report-field {
-            margin: 15px 0;
-            padding: 10px;
-            background-color: #f8fafc;
-            border-left: 4px solid #2563eb;
-        }
-        .report-field strong {
-            display: inline-block;
-            min-width: 200px;
-        }
-    </style>
-</head>
-<body>
-    ${reportContent.innerHTML}
-</body>
-</html>
-    `.trim();
 }
 
 // Helper function to escape HTML
@@ -210,18 +214,6 @@ function formatDate(dateString) {
         month: 'long',
         day: 'numeric'
     });
-}
-
-// Save reports to localStorage
-function saveReportToHistory(report) {
-    let history = JSON.parse(localStorage.getItem('doz3Reports') || '[]');
-    history.unshift({
-        ...report,
-        id: Date.now()
-    });
-    // Keep only last 50 reports
-    history = history.slice(0, 50);
-    localStorage.setItem('doz3Reports', JSON.stringify(history));
 }
 
 // Initialize
