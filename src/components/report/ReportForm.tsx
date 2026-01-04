@@ -5,17 +5,18 @@ import { Input, Select, Button } from '../common';
 export const ReportForm: React.FC = () => {
   const createReport = useDOZ3Store((state) => state.createReport);
   const currentReport = useDOZ3Store((state) => state.currentReport);
+  const isLoading = useDOZ3Store((state) => state.isLoading);
+  const error = useDOZ3Store((state) => state.error);
 
   const [formData, setFormData] = useState({
     orgName: '',
     orgAddress: '',
-    orgLicense: '',
-    orgINN: '',
-    chiefDoctor: '',
-    chiefDoctorPosition: 'Главный врач',
-    radiationOfficer: '',
-    radiationOfficerPosition: 'Медицинский физик',
+    orgOKPO: '',
+    responsibleName: '',
+    responsiblePosition: 'Главный врач',
+    responsiblePhone: '',
     year: new Date().getFullYear(),
+    quarter: '' as '' | '1' | '2' | '3' | '4',
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -26,26 +27,24 @@ export const ReportForm: React.FC = () => {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    createReport({
+    await createReport({
       organization: {
         name: formData.orgName,
         address: formData.orgAddress,
-        license: formData.orgLicense,
-        inn: formData.orgINN
+        OKPO: formData.orgOKPO
       },
       responsible: {
-        chiefDoctor: formData.chiefDoctor,
-        chiefDoctorPosition: formData.chiefDoctorPosition,
-        radiationOfficer: formData.radiationOfficer,
-        radiationOfficerPosition: formData.radiationOfficerPosition
+        name: formData.responsibleName,
+        position: formData.responsiblePosition,
+        phone: formData.responsiblePhone
       },
       period: {
-        year: Number(formData.year)
-      },
-      clinicType: 'dental'
+        year: Number(formData.year),
+        quarter: formData.quarter ? (Number(formData.quarter) as 1 | 2 | 3 | 4) : undefined
+      }
     });
   };
 
@@ -96,59 +95,45 @@ export const ReportForm: React.FC = () => {
             />
           </div>
           <Input
-            label="Лицензия"
-            name="orgLicense"
-            value={formData.orgLicense}
+            label="ОКПО"
+            name="orgOKPO"
+            value={formData.orgOKPO}
             onChange={handleInputChange}
-            placeholder="ЛО-77-01-012345"
+            placeholder="12345678"
             required
-          />
-          <Input
-            label="ИНН"
-            name="orgINN"
-            value={formData.orgINN}
-            onChange={handleInputChange}
-            placeholder="1234567890"
-            required
-            maxLength={12}
+            maxLength={10}
           />
         </div>
       </div>
 
-      {/* Ответственные лица */}
+      {/* Ответственное лицо */}
       <div className="border-t pt-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          Ответственные лица
+          Ответственное лицо
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Input
-            label="Руководитель (ФИО)"
-            name="chiefDoctor"
-            value={formData.chiefDoctor}
+            label="ФИО"
+            name="responsibleName"
+            value={formData.responsibleName}
             onChange={handleInputChange}
             placeholder="Иванов И.И."
             required
           />
           <Input
-            label="Должность руководителя"
-            name="chiefDoctorPosition"
-            value={formData.chiefDoctorPosition}
+            label="Должность"
+            name="responsiblePosition"
+            value={formData.responsiblePosition}
             onChange={handleInputChange}
+            placeholder="Главный врач"
             required
           />
           <Input
-            label="Ответственный за радиационную безопасность (ФИО)"
-            name="radiationOfficer"
-            value={formData.radiationOfficer}
+            label="Телефон"
+            name="responsiblePhone"
+            value={formData.responsiblePhone}
             onChange={handleInputChange}
-            placeholder="Петров П.П."
-            required
-          />
-          <Input
-            label="Должность ответственного"
-            name="radiationOfficerPosition"
-            value={formData.radiationOfficerPosition}
-            onChange={handleInputChange}
+            placeholder="+7 (999) 123-45-67"
             required
           />
         </div>
@@ -159,7 +144,7 @@ export const ReportForm: React.FC = () => {
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
           Отчётный период
         </h3>
-        <div className="max-w-xs">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-lg">
           <Select
             label="Год"
             name="year"
@@ -168,12 +153,31 @@ export const ReportForm: React.FC = () => {
             options={yearOptions}
             required
           />
+          <Select
+            label="Квартал (опционально)"
+            name="quarter"
+            value={formData.quarter}
+            onChange={handleInputChange}
+            options={[
+              { value: '', label: 'Год (не указан)' },
+              { value: '1', label: 'I квартал' },
+              { value: '2', label: 'II квартал' },
+              { value: '3', label: 'III квартал' },
+              { value: '4', label: 'IV квартал' },
+            ]}
+          />
         </div>
       </div>
 
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded">
+          {error}
+        </div>
+      )}
+
       <div className="border-t pt-6 flex justify-end gap-3">
-        <Button type="submit" variant="primary" size="lg">
-          Создать отчёт
+        <Button type="submit" variant="primary" size="lg" disabled={isLoading}>
+          {isLoading ? 'Создание...' : 'Создать отчёт'}
         </Button>
       </div>
     </form>

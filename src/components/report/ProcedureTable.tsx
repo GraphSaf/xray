@@ -9,11 +9,13 @@ export const ProcedureTable: React.FC = () => {
   const currentReport = useDOZ3Store((state) => state.currentReport);
   const addProcedure = useDOZ3Store((state) => state.addProcedure);
   const removeProcedure = useDOZ3Store((state) => state.removeProcedure);
+  const saveCurrentReport = useDOZ3Store((state) => state.saveCurrentReport);
+  const isLoading = useDOZ3Store((state) => state.isLoading);
+  const error = useDOZ3Store((state) => state.error);
 
   const [newProcedure, setNewProcedure] = useState({
     procedureId: '',
     count: 0,
-    ageGroup: 'adult' as 'adult' | 'child'
   });
 
   const [warning, setWarning] = useState<string | null>(null);
@@ -44,7 +46,6 @@ export const ProcedureTable: React.FC = () => {
       name: procedureDef.name,
       count: newProcedure.count,
       dosePerProc_mGy: dosePerProc,
-      ageGroup: newProcedure.ageGroup,
       totalDose_personmGy: 0
     });
 
@@ -64,14 +65,12 @@ export const ProcedureTable: React.FC = () => {
       name: procedureDef.name,
       count: newProcedure.count,
       dosePerProc_mGy: dosePerProc,
-      ageGroup: newProcedure.ageGroup
     });
 
     // Сброс формы
     setNewProcedure({
       procedureId: '',
       count: 0,
-      ageGroup: 'adult'
     });
   };
 
@@ -80,21 +79,35 @@ export const ProcedureTable: React.FC = () => {
     label: p.name
   }));
 
-  const ageGroupOptions = [
-    { value: 'adult', label: 'Взрослые' },
-    { value: 'child', label: 'Дети' }
-  ];
+  const handleSave = async () => {
+    await saveCurrentReport();
+  };
 
   return (
     <div className="bg-white shadow rounded-lg p-6 space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">
-          Процедуры
-        </h2>
-        <p className="text-gray-600 text-sm">
-          Добавьте выполненные процедуры и количество пациентов
-        </p>
+      <div className="flex justify-between items-start">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            Процедуры
+          </h2>
+          <p className="text-gray-600 text-sm">
+            Добавьте выполненные процедуры и количество пациентов
+          </p>
+        </div>
+        <Button
+          onClick={handleSave}
+          disabled={isLoading || currentReport.procedures.length === 0}
+          variant="primary"
+        >
+          {isLoading ? 'Сохранение...' : 'Сохранить отчёт'}
+        </Button>
       </div>
+
+      {error && (
+        <Alert type="error" onClose={() => {}}>
+          {error}
+        </Alert>
+      )}
 
       {/* Форма добавления процедуры */}
       <div className="bg-gray-50 rounded-md p-4">
@@ -106,7 +119,7 @@ export const ProcedureTable: React.FC = () => {
             </Alert>
           </div>
         )}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="md:col-span-2">
             <Select
               label="Тип процедуры"
@@ -127,15 +140,6 @@ export const ProcedureTable: React.FC = () => {
             }))}
             placeholder="0"
           />
-          <Select
-            label="Возрастная группа"
-            value={newProcedure.ageGroup}
-            onChange={(e) => setNewProcedure(prev => ({
-              ...prev,
-              ageGroup: e.target.value as 'adult' | 'child'
-            }))}
-            options={ageGroupOptions}
-          />
         </div>
         <div className="mt-4">
           <Button
@@ -155,7 +159,6 @@ export const ProcedureTable: React.FC = () => {
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">№</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Наименование</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Возраст</th>
                 <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Количество</th>
                 <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Доза, мГр</th>
                 <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Коллективная доза</th>
@@ -167,9 +170,6 @@ export const ProcedureTable: React.FC = () => {
                 <tr key={proc.id} className="hover:bg-gray-50">
                   <td className="px-4 py-3 text-sm text-gray-900">{index + 1}</td>
                   <td className="px-4 py-3 text-sm text-gray-900">{proc.name}</td>
-                  <td className="px-4 py-3 text-sm text-gray-600">
-                    {proc.ageGroup === 'adult' ? 'Взрослые' : 'Дети'}
-                  </td>
                   <td className="px-4 py-3 text-sm text-gray-900 text-right">{proc.count}</td>
                   <td className="px-4 py-3 text-sm text-gray-900 text-right">
                     {proc.dosePerProc_mGy.toFixed(3)}
@@ -191,11 +191,11 @@ export const ProcedureTable: React.FC = () => {
             </tbody>
             <tfoot className="bg-gray-100">
               <tr>
-                <td colSpan={3} className="px-4 py-3 text-sm font-bold text-gray-900">
+                <td colSpan={2} className="px-4 py-3 text-sm font-bold text-gray-900">
                   ИТОГО:
                 </td>
                 <td className="px-4 py-3 text-sm font-bold text-gray-900 text-right">
-                  {currentReport.totalProcedures}
+                  {currentReport.procedures.reduce((sum, p) => sum + p.count, 0)}
                 </td>
                 <td></td>
                 <td className="px-4 py-3 text-sm font-bold text-primary text-right">

@@ -39,9 +39,10 @@ export function validateReport(report: DOZ3Report): string[] {
 
   if (!report.organization.name) errors.push('Не указано название организации');
   if (!report.organization.address) errors.push('Не указан адрес организации');
-  if (!report.organization.license) errors.push('Не указана лицензия');
-  if (!report.responsible.chiefDoctor) errors.push('Не указан руководитель');
-  if (!report.responsible.radiationOfficer) errors.push('Не указан ответственный за радиационную безопасность');
+  if (!report.organization.OKPO) errors.push('Не указан ОКПО');
+  if (!report.responsible.name) errors.push('Не указано ответственное лицо');
+  if (!report.responsible.position) errors.push('Не указана должность ответственного');
+  if (!report.responsible.phone) errors.push('Не указан телефон ответственного');
   if (!report.period.year) errors.push('Не указан отчетный период');
   if (report.procedures.length === 0) errors.push('Не добавлено ни одной процедуры');
 

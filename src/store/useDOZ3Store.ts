@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { DOZ3Report, Procedure } from '../types';
-import { calculateProcedureTotalDose, calculateReportTotalDose, calculateReportTotalProcedures } from '../utils/calculations';
+import { calculateProcedureTotalDose, calculateReportTotalDose } from '../utils/calculations';
+import { reportApi } from '../services/reportApi';
 
 interface DOZ3State {
   currentReport: DOZ3Report | null;
@@ -9,16 +10,22 @@ interface DOZ3State {
   error: string | null;
 
   // Actions
-  createReport: (data: Partial<DOZ3Report>) => void;
-  updateReport: (id: string, data: Partial<DOZ3Report>) => void;
-  deleteReport: (id: string) => void;
+  fetchReports: () => Promise<void>;
+  fetchReport: (id: string) => Promise<void>;
+  createReport: (data: {
+    organization: DOZ3Report['organization'];
+    responsible: DOZ3Report['responsible'];
+    period: DOZ3Report['period'];
+  }) => Promise<void>;
+  saveCurrentReport: () => Promise<void>;
+  deleteReport: (id: string) => Promise<void>;
   setCurrentReport: (report: DOZ3Report | null) => void;
 
   addProcedure: (procedure: Omit<Procedure, 'id' | 'totalDose_personmGy'>) => void;
   updateProcedure: (procedureId: string, data: Partial<Procedure>) => void;
   removeProcedure: (procedureId: string) => void;
 
-  recalculateTotals: () => void;
+  clearError: () => void;
 }
 
 export const useDOZ3Store = create<DOZ3State>((set, get) => ({
@@ -27,67 +34,107 @@ export const useDOZ3Store = create<DOZ3State>((set, get) => ({
   isLoading: false,
   error: null,
 
-  createReport: (data) => {
-    const newReport: DOZ3Report = {
-      id: crypto.randomUUID(),
-      version: '1.0',
-      organization: data.organization || {
-        name: '',
-        address: '',
-        license: '',
-        inn: ''
-      },
-      responsible: data.responsible || {
-        chiefDoctor: '',
-        chiefDoctorPosition: '',
-        radiationOfficer: '',
-        radiationOfficerPosition: ''
-      },
-      period: data.period || {
-        year: new Date().getFullYear()
-      },
-      clinicType: data.clinicType || 'dental',
-      procedures: data.procedures || [],
-      equipment: data.equipment || [],
-      totalProcedures: 0,
-      totalDose_personmGy: 0,
-      createdAt: new Date(),
-      modifiedAt: new Date(),
-      status: 'draft',
-      ...data
-    };
-
-    set((state) => ({
-      currentReport: newReport,
-      reports: [...state.reports, newReport]
-    }));
+  // Получить все отчеты
+  fetchReports: async () => {
+    set({ isLoading: true, error: null });
+    try {
+      const reports = await reportApi.getAll();
+      set({ reports, isLoading: false });
+    } catch (error) {
+      set({
+        error: error instanceof Error ? error.message : 'Ошибка загрузки отчетов',
+        isLoading: false
+      });
+    }
   },
 
-  updateReport: (id, data) => {
-    set((state) => ({
-      reports: state.reports.map((report) =>
-        report.id === id
-          ? { ...report, ...data, modifiedAt: new Date() }
-          : report
-      ),
-      currentReport:
-        state.currentReport?.id === id
-          ? { ...state.currentReport, ...data, modifiedAt: new Date() }
-          : state.currentReport
-    }));
+  // Получить отчет по ID
+  fetchReport: async (id: string) => {
+    set({ isLoading: true, error: null });
+    try {
+      const report = await reportApi.getById(id);
+      set({ currentReport: report, isLoading: false });
+    } catch (error) {
+      set({
+        error: error instanceof Error ? error.message : 'Ошибка загрузки отчета',
+        isLoading: false
+      });
+    }
   },
 
-  deleteReport: (id) => {
-    set((state) => ({
-      reports: state.reports.filter((report) => report.id !== id),
-      currentReport: state.currentReport?.id === id ? null : state.currentReport
-    }));
+  // Создать новый отчет
+  createReport: async (data) => {
+    set({ isLoading: true, error: null });
+    try {
+      const newReport: DOZ3Report = {
+        id: crypto.randomUUID(),
+        organization: data.organization,
+        responsible: data.responsible,
+        period: data.period,
+        procedures: [],
+        totalDose_personmGy: 0,
+        status: 'draft',
+      };
+
+      const createdReport = await reportApi.create(newReport);
+      set((state) => ({
+        currentReport: createdReport,
+        reports: [...state.reports, createdReport],
+        isLoading: false
+      }));
+    } catch (error) {
+      set({
+        error: error instanceof Error ? error.message : 'Ошибка создания отчета',
+        isLoading: false
+      });
+    }
   },
 
+  // Сохранить текущий отчет
+  saveCurrentReport: async () => {
+    const { currentReport } = get();
+    if (!currentReport) return;
+
+    set({ isLoading: true, error: null });
+    try {
+      const updatedReport = await reportApi.update(currentReport.id, currentReport);
+      set((state) => ({
+        currentReport: updatedReport,
+        reports: state.reports.map((r) => r.id === updatedReport.id ? updatedReport : r),
+        isLoading: false
+      }));
+    } catch (error) {
+      set({
+        error: error instanceof Error ? error.message : 'Ошибка сохранения отчета',
+        isLoading: false
+      });
+    }
+  },
+
+  // Удалить отчет
+  deleteReport: async (id: string) => {
+    set({ isLoading: true, error: null });
+    try {
+      await reportApi.delete(id);
+      set((state) => ({
+        reports: state.reports.filter((r) => r.id !== id),
+        currentReport: state.currentReport?.id === id ? null : state.currentReport,
+        isLoading: false
+      }));
+    } catch (error) {
+      set({
+        error: error instanceof Error ? error.message : 'Ошибка удаления отчета',
+        isLoading: false
+      });
+    }
+  },
+
+  // Установить текущий отчет
   setCurrentReport: (report) => {
     set({ currentReport: report });
   },
 
+  // Добавить процедуру (локально, без сохранения в БД)
   addProcedure: (procedureData) => {
     const { currentReport } = get();
     if (!currentReport) return;
@@ -110,14 +157,13 @@ export const useDOZ3Store = create<DOZ3State>((set, get) => ({
         ? {
             ...state.currentReport,
             procedures: updatedProcedures,
-            totalProcedures: calculateReportTotalProcedures(updatedProcedures),
             totalDose_personmGy: calculateReportTotalDose(updatedProcedures),
-            modifiedAt: new Date()
           }
         : null
     }));
   },
 
+  // Обновить процедуру (локально, без сохранения в БД)
   updateProcedure: (procedureId, data) => {
     const { currentReport } = get();
     if (!currentReport) return;
@@ -142,14 +188,13 @@ export const useDOZ3Store = create<DOZ3State>((set, get) => ({
         ? {
             ...state.currentReport,
             procedures: updatedProcedures,
-            totalProcedures: calculateReportTotalProcedures(updatedProcedures),
             totalDose_personmGy: calculateReportTotalDose(updatedProcedures),
-            modifiedAt: new Date()
           }
         : null
     }));
   },
 
+  // Удалить процедуру (локально, без сохранения в БД)
   removeProcedure: (procedureId) => {
     const { currentReport } = get();
     if (!currentReport) return;
@@ -163,36 +208,14 @@ export const useDOZ3Store = create<DOZ3State>((set, get) => ({
         ? {
             ...state.currentReport,
             procedures: updatedProcedures,
-            totalProcedures: calculateReportTotalProcedures(updatedProcedures),
             totalDose_personmGy: calculateReportTotalDose(updatedProcedures),
-            modifiedAt: new Date()
           }
         : null
     }));
   },
 
-  recalculateTotals: () => {
-    const { currentReport } = get();
-    if (!currentReport) return;
-
-    const procedures = currentReport.procedures.map((proc) => ({
-      ...proc,
-      totalDose_personmGy: calculateProcedureTotalDose(
-        proc.count,
-        proc.dosePerProc_mGy
-      )
-    }));
-
-    set((state) => ({
-      currentReport: state.currentReport
-        ? {
-            ...state.currentReport,
-            procedures,
-            totalProcedures: calculateReportTotalProcedures(procedures),
-            totalDose_personmGy: calculateReportTotalDose(procedures),
-            modifiedAt: new Date()
-          }
-        : null
-    }));
+  // Очистить ошибку
+  clearError: () => {
+    set({ error: null });
   }
 }));

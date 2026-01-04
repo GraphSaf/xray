@@ -50,7 +50,7 @@ export const ExportButtons: React.FC = () => {
           <ul className="space-y-1">
             <li>• Организация: {currentReport.organization.name}</li>
             <li>• Год: {currentReport.period.year}</li>
-            <li>• Всего процедур: {currentReport.totalProcedures}</li>
+            <li>• Всего процедур: {currentReport.procedures.reduce((sum, p) => sum + p.count, 0)}</li>
             <li>• Коллективная доза: {currentReport.totalDose_personmGy.toFixed(2)} чел·мГр</li>
           </ul>
         </div>
