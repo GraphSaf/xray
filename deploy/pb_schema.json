@@ -1,0 +1,129 @@
+[
+  {
+    "id": "doz3_reports",
+    "name": "doz3_reports",
+    "type": "base",
+    "system": false,
+    "schema": [
+      {
+        "id": "org_name",
+        "name": "organizationName",
+        "type": "text",
+        "required": true,
+        "options": {
+          "min": 1,
+          "max": 255
+        }
+      },
+      {
+        "id": "org_address",
+        "name": "organizationAddress",
+        "type": "text",
+        "required": true,
+        "options": {
+          "min": 1,
+          "max": 500
+        }
+      },
+      {
+        "id": "org_okpo",
+        "name": "organizationOKPO",
+        "type": "text",
+        "required": true,
+        "options": {
+          "min": 1,
+          "max": 20
+        }
+      },
+      {
+        "id": "resp_name",
+        "name": "responsibleName",
+        "type": "text",
+        "required": true,
+        "options": {
+          "min": 1,
+          "max": 255
+        }
+      },
+      {
+        "id": "resp_position",
+        "name": "responsiblePosition",
+        "type": "text",
+        "required": true,
+        "options": {
+          "min": 1,
+          "max": 255
+        }
+      },
+      {
+        "id": "resp_phone",
+        "name": "responsiblePhone",
+        "type": "text",
+        "required": true,
+        "options": {
+          "min": 1,
+          "max": 50
+        }
+      },
+      {
+        "id": "period_year",
+        "name": "periodYear",
+        "type": "number",
+        "required": true,
+        "options": {
+          "min": 2000,
+          "max": 2100
+        }
+      },
+      {
+        "id": "period_quarter",
+        "name": "periodQuarter",
+        "type": "number",
+        "required": false,
+        "options": {
+          "min": 1,
+          "max": 4
+        }
+      },
+      {
+        "id": "procedures",
+        "name": "procedures",
+        "type": "json",
+        "required": true
+      },
+      {
+        "id": "total_dose",
+        "name": "totalDose_personmGy",
+        "type": "number",
+        "required": true,
+        "options": {
+          "min": 0
+        }
+      },
+      {
+        "id": "status",
+        "name": "status",
+        "type": "select",
+        "required": true,
+        "options": {
+          "maxSelect": 1,
+          "values": [
+            "draft",
+            "completed",
+            "archived"
+          ]
+        }
+      }
+    ],
+    "indexes": [
+      "CREATE INDEX idx_period ON doz3_reports (periodYear, periodQuarter)",
+      "CREATE INDEX idx_status ON doz3_reports (status)"
+    ],
+    "listRule": "",
+    "viewRule": "",
+    "createRule": "",
+    "updateRule": "",
+    "deleteRule": "",
+    "options": {}
+  }
+]
