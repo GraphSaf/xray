@@ -1,0 +1,69 @@
+name: Auto Deploy to Server
+
+on:
+  push:
+    branches:
+      - main
+      - claude/radiation-dose-reporting-app-RM8Cf
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build production
+        run: npm run build
+
+      - name: Install SSH key
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          known_hosts: 'placeholder'
+
+      - name: Add server to known_hosts
+        run: |
+          ssh-keyscan -H 85.198.86.169 >> ~/.ssh/known_hosts
+
+      - name: Deploy PocketBase (first run only)
+        continue-on-error: true
+        run: |
+          ssh root@85.198.86.169 'bash -s' < deploy/full-deploy.sh 2>&1 | tee deploy.log
+
+      - name: Upload frontend to server
+        run: |
+          ssh root@85.198.86.169 'mkdir -p /var/www/doz3'
+          scp -r dist/* root@85.198.86.169:/var/www/doz3/
+
+      - name: Restart services
+        run: |
+          ssh root@85.198.86.169 'systemctl restart pocketbase && systemctl reload nginx'
+
+      - name: Check deployment
+        run: |
+          ssh root@85.198.86.169 'systemctl is-active pocketbase'
+          ssh root@85.198.86.169 'systemctl is-active nginx'
+          echo "✅ Deployment successful!"
+          echo "🌐 App: https://xray.zubrdental.ru/"
+          echo "🔧 Admin: https://xray.zubrdental.ru/_/"
+
+      - name: Upload deployment logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployment-logs
+          path: |
+            deploy.log
+          retention-days: 30
