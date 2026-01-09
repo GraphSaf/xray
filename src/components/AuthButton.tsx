@@ -18,17 +18,14 @@ export function AuthButton() {
     try {
       setLoading(true);
 
-      // Получаем список доступных OAuth провайдеров
-      const authMethods = await pb.collection('users').listAuthMethods();
-      console.log('Auth methods response:', authMethods);
-      console.log('Auth methods keys:', Object.keys(authMethods));
+      // Прямой fetch запрос вместо SDK
+      const response = await fetch(`${pb.baseUrl}/api/collections/users/auth-methods`);
+      const authMethods = await response.json();
+
+      console.log('Auth methods response (direct fetch):', authMethods);
       console.log('Auth methods stringified:', JSON.stringify(authMethods, null, 2));
 
-      // Проверяем разные варианты структуры ответа
-      const providers = (authMethods as any).authProviders || (authMethods as any).oauth2 || [];
-      console.log('Providers array:', providers);
-
-      const vkProvider = providers.find?.(
+      const vkProvider = authMethods.authProviders?.find(
         (provider: any) => provider.name === 'vk'
       );
 
