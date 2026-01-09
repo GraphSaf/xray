@@ -20,11 +20,16 @@ export function AuthButton() {
 
       // Получаем список доступных OAuth провайдеров
       const authMethods = await pb.collection('users').listAuthMethods();
+      console.log('Auth methods response:', authMethods);
+
       const vkProvider = (authMethods as any).authProviders?.find(
         (provider: any) => provider.name === 'vk'
       );
 
+      console.log('VK provider found:', vkProvider);
+
       if (!vkProvider) {
+        console.error('VK provider not found. Auth methods:', authMethods);
         alert('VK авторизация не настроена');
         return;
       }
