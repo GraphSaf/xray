@@ -18,38 +18,19 @@ export function AuthButton() {
     try {
       setLoading(true);
 
-      // Прямой fetch запрос вместо SDK
-      const response = await fetch(`${pb.baseUrl}/api/collections/users/auth-methods`);
-      const authMethods = await response.json();
-
-      console.log('Auth methods response (direct fetch):', authMethods);
-      console.log('Auth methods stringified:', JSON.stringify(authMethods, null, 2));
-
-      const vkProvider = authMethods.authProviders?.find(
-        (provider: any) => provider.name === 'vk'
-      );
-
-      console.log('VK provider found:', vkProvider);
-
-      if (!vkProvider) {
-        console.error('VK provider not found. Full authMethods:', authMethods);
-        alert('VK авторизация не настроена. Проверьте консоль для деталей.');
-        return;
-      }
-
-      // Сохраняем provider в localStorage для обработки редиректа
-      localStorage.setItem('provider', JSON.stringify(vkProvider));
-
-      // Формируем URL для OAuth с правильным redirect_uri
-      const redirectUrl = `${window.location.origin}/xray/`;
-      const authUrl = `${vkProvider.authUrl}${redirectUrl}`;
-
-      // Перенаправляем на страницу авторизации VK
-      window.location.href = authUrl;
+      // Используем правильный PocketBase OAuth2 flow
+      await pb.collection('users').authWithOAuth2({
+        provider: 'vk',
+        // Правильный redirect URL для PocketBase
+        urlCallback: (url) => {
+          // PocketBase сформировал правильный OAuth URL с redirect_uri=.../api/oauth2-redirect
+          // Открываем его в текущем окне
+          window.location.href = url;
+        },
+      });
     } catch (error) {
       console.error('VK login error:', error);
-      alert('Ошибка при входе через VK');
-    } finally {
+      alert('Ошибка при входе через VK: ' + (error as Error).message);
       setLoading(false);
     }
   };
@@ -58,46 +39,6 @@ export function AuthButton() {
     pb.authStore.clear();
     setUser(null);
   };
-
-  // Обработка OAuth редиректа
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const code = urlParams.get('code');
-    const state = urlParams.get('state');
-
-    if (code && state) {
-      const handleOAuthRedirect = async () => {
-        try {
-          const providerData = localStorage.getItem('provider');
-          if (!providerData) return;
-
-          const provider = JSON.parse(providerData);
-
-          // Получаем redirect_uri из state
-          const redirectUrl = `${window.location.origin}/xray/`;
-
-          // Обмениваем code на токен
-          await pb.collection('users').authWithOAuth2Code(
-            provider.name,
-            code,
-            provider.codeVerifier,
-            redirectUrl
-          );
-
-          // Очищаем localStorage и URL
-          localStorage.removeItem('provider');
-          window.history.replaceState({}, document.title, '/xray/');
-
-          setUser(pb.authStore.model);
-        } catch (error) {
-          console.error('OAuth redirect error:', error);
-          alert('Ошибка при завершении авторизации');
-        }
-      };
-
-      handleOAuthRedirect();
-    }
-  }, []);
 
   if (user) {
     return (
