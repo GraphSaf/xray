@@ -21,16 +21,22 @@ export function AuthButton() {
       // Получаем список доступных OAuth провайдеров
       const authMethods = await pb.collection('users').listAuthMethods();
       console.log('Auth methods response:', authMethods);
+      console.log('Auth methods keys:', Object.keys(authMethods));
+      console.log('Auth methods stringified:', JSON.stringify(authMethods, null, 2));
 
-      const vkProvider = (authMethods as any).authProviders?.find(
+      // Проверяем разные варианты структуры ответа
+      const providers = (authMethods as any).authProviders || (authMethods as any).oauth2 || [];
+      console.log('Providers array:', providers);
+
+      const vkProvider = providers.find?.(
         (provider: any) => provider.name === 'vk'
       );
 
       console.log('VK provider found:', vkProvider);
 
       if (!vkProvider) {
-        console.error('VK provider not found. Auth methods:', authMethods);
-        alert('VK авторизация не настроена');
+        console.error('VK provider not found. Full authMethods:', authMethods);
+        alert('VK авторизация не настроена. Проверьте консоль для деталей.');
         return;
       }
 
