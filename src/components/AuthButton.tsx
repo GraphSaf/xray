@@ -19,18 +19,14 @@ export function AuthButton() {
       setLoading(true);
 
       // Используем правильный PocketBase OAuth2 flow
-      await pb.collection('users').authWithOAuth2({
-        provider: 'vk',
-        // Правильный redirect URL для PocketBase
-        urlCallback: (url) => {
-          // PocketBase сформировал правильный OAuth URL с redirect_uri=.../api/oauth2-redirect
-          // Открываем его в текущем окне
-          window.location.href = url;
-        },
-      });
+      const authData = await pb.collection('users').authWithOAuth2({ provider: 'vk' });
+
+      console.log('Auth successful:', authData);
+      setUser(authData.record);
     } catch (error) {
       console.error('VK login error:', error);
       alert('Ошибка при входе через VK: ' + (error as Error).message);
+    } finally {
       setLoading(false);
     }
   };
