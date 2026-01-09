@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { DOZ3Report, Procedure } from '../types';
 import { calculateProcedureTotalDose, calculateReportTotalDose } from '../utils/calculations';
 import { reportApi } from '../services/reportApi';
+import { generateUUID } from '../utils/uuid';
 
 interface DOZ3State {
   currentReport: DOZ3Report | null;
@@ -67,7 +68,7 @@ export const useDOZ3Store = create<DOZ3State>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       const newReport: DOZ3Report = {
-        id: crypto.randomUUID(),
+        id: generateUUID(),
         organization: data.organization,
         responsible: data.responsible,
         period: data.period,
@@ -145,7 +146,7 @@ export const useDOZ3Store = create<DOZ3State>((set, get) => ({
     );
 
     const newProcedure: Procedure = {
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       totalDose_personmGy: totalDose,
       ...procedureData
     };

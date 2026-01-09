@@ -30,3 +30,4 @@ dist-ssr
 
 # Deployment scripts with credentials
 deploy-now.sh
+update-server.sh
