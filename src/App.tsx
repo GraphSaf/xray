@@ -1,74 +1,45 @@
-import { useDOZ3Store } from './store/useDOZ3Store';
-import { ReportForm } from './components/report/ReportForm';
-import { ProcedureTable } from './components/report/ProcedureTable';
-import { ExportButtons } from './components/report/ExportButtons';
-import { Button } from './components/common';
-import { AuthButton } from './components/AuthButton';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { LandingPage } from './pages/LandingPage';
+import { DOZ3Page } from './pages/DOZ3Page';
+import { CRMPage } from './pages/CRMPage';
+import { PositioningPage } from './pages/PositioningPage';
+import { pb } from './lib/pocketbase';
+
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const isAuthenticated = pb.authStore.isValid;
+
+  if (!isAuthenticated) {
+    return <Navigate to="/" replace />;
+  }
+
+  return <>{children}</>;
+}
 
 function App() {
-  const currentReport = useDOZ3Store((state) => state.currentReport);
-  const setCurrentReport = useDOZ3Store((state) => state.setCurrentReport);
-
-  const handleNewReport = () => {
-    setCurrentReport(null);
-  };
-
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center mb-4">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">
-                Форма №3-ДОЗ
-              </h1>
-              <p className="mt-1 text-sm text-gray-600">
-                Учет коллективных доз облучения пациентов при рентгенологических исследованиях
-              </p>
-            </div>
-            <AuthButton />
-          </div>
-          {currentReport && (
-            <Button onClick={handleNewReport} variant="secondary">
-              + Новый отчёт
-            </Button>
-          )}
-        </div>
-      </header>
-
-      <main>
-        <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-          <div className="px-4 py-6 sm:px-0 space-y-6">
-            {!currentReport ? (
-              <ReportForm />
-            ) : (
-              <>
-                <div className="bg-white shadow rounded-lg p-4 border-l-4 border-primary">
-                  <h3 className="font-semibold text-gray-900">
-                    Текущий отчёт: {currentReport.organization.name}
-                  </h3>
-                  <p className="text-sm text-gray-600">
-                    Отчётный период: {currentReport.period.year} год
-                  </p>
-                </div>
-                <ProcedureTable />
-                <ExportButtons />
-              </>
-            )}
-          </div>
-        </div>
-      </main>
-
-      <footer className="bg-white border-t mt-12">
-        <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
-          <p className="text-xs text-gray-500">
-            Данное приложение является вспомогательным инструментом для формирования отчетности.
-            Ответственность за корректность вводимых данных и соответствие нормативным требованиям несет пользователь.
-            Перед отправкой отчета в надзорные органы рекомендуется проверка данных медицинским физиком или ответственным за радиационную безопасность.
-          </p>
-        </div>
-      </footer>
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/doz3" element={<DOZ3Page />} />
+        <Route
+          path="/crm"
+          element={
+            <ProtectedRoute>
+              <CRMPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/positioning"
+          element={
+            <ProtectedRoute>
+              <PositioningPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 

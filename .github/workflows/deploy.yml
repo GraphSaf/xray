@@ -35,11 +35,11 @@ jobs:
           username: ${{secrets.SERVER_USER}}
           key: ${{secrets.SSH_PRIVATE_KEY}}
           script: |
-            if [ -d /var/www/doz3/xray ]; then
-              cp -r /var/www/doz3/xray /var/www/doz3/xray.backup.$(date +%Y%m%d_%H%M%S)
-              cd /var/www/doz3 && ls -t xray.backup.* | tail -n +4 | xargs -r rm -rf
+            if [ -d /var/www/doz3 ]; then
+              cp -r /var/www/doz3 /var/www/doz3.backup.$(date +%Y%m%d_%H%M%S)
+              cd /var/www && ls -t doz3.backup.* | tail -n +4 | xargs -r rm -rf
             fi
-            rm -rf /var/www/doz3/xray/*
+            rm -rf /var/www/doz3/*
 
       - name: Copy files to server
         uses: appleboy/scp-action@v0.1.7
@@ -48,7 +48,7 @@ jobs:
           username: ${{secrets.SERVER_USER}}
           key: ${{secrets.SSH_PRIVATE_KEY}}
           source: "dist/*"
-          target: "/var/www/doz3/xray/"
+          target: "/var/www/doz3/"
           strip_components: 1
 
       - name: Set permissions
@@ -58,6 +58,6 @@ jobs:
           username: ${{secrets.SERVER_USER}}
           key: ${{secrets.SSH_PRIVATE_KEY}}
           script: |
-            chown -R www-data:www-data /var/www/doz3/xray
-            chmod -R 755 /var/www/doz3/xray
+            chown -R www-data:www-data /var/www/doz3
+            chmod -R 755 /var/www/doz3
             echo "Deployment completed!"
