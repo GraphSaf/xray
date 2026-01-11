@@ -2,6 +2,8 @@ import React from 'react';
 import { useDOZ3Store } from '../../store/useDOZ3Store';
 import { Button, Alert } from '../common';
 import { exportToExcel } from '../../utils/exportExcel';
+import { exportToDoc } from '../../utils/exportDoc';
+import { exportToPDF } from '../../utils/exportPdf';
 
 export const ExportButtons: React.FC = () => {
   const currentReport = useDOZ3Store((state) => state.currentReport);
@@ -14,6 +16,14 @@ export const ExportButtons: React.FC = () => {
     exportToExcel(currentReport);
   };
 
+  const handleExportDoc = async () => {
+    await exportToDoc(currentReport);
+  };
+
+  const handleExportPDF = () => {
+    exportToPDF(currentReport);
+  };
+
   const hasData = currentReport.procedures.length > 0;
 
   return (
@@ -23,7 +33,7 @@ export const ExportButtons: React.FC = () => {
           Экспорт отчёта
         </h2>
         <p className="text-gray-600 text-sm">
-          Скачайте готовый отчёт в формате Excel
+          Скачайте готовый отчёт в удобном формате: Excel, Word или PDF
         </p>
       </div>
 
@@ -33,7 +43,7 @@ export const ExportButtons: React.FC = () => {
         </Alert>
       )}
 
-      <div className="flex gap-3">
+      <div className="flex flex-wrap gap-3">
         <Button
           onClick={handleExportExcel}
           variant="success"
@@ -41,6 +51,22 @@ export const ExportButtons: React.FC = () => {
           size="lg"
         >
           📥 Скачать Excel
+        </Button>
+        <Button
+          onClick={handleExportDoc}
+          variant="primary"
+          disabled={!hasData}
+          size="lg"
+        >
+          📄 Скачать Word
+        </Button>
+        <Button
+          onClick={handleExportPDF}
+          variant="secondary"
+          disabled={!hasData}
+          size="lg"
+        >
+          📑 Скачать PDF
         </Button>
       </div>
 

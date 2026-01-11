@@ -1,5 +1,6 @@
 import * as XLSX from 'xlsx';
 import { DOZ3Report } from '../types';
+import { filterProceduresForExport } from './demoMode';
 
 /**
  * Экспортирует отчёт в формат Excel
@@ -7,7 +8,10 @@ import { DOZ3Report } from '../types';
 export function exportToExcel(report: DOZ3Report): void {
   const wb = XLSX.utils.book_new();
 
-  const totalProcedures = report.procedures.reduce((sum, p) => sum + p.count, 0);
+  // Фильтруем процедуры в зависимости от режима (демо/полный)
+  const procedures = filterProceduresForExport(report.procedures);
+  const totalProcedures = procedures.reduce((sum, p) => sum + p.count, 0);
+  const totalDose = procedures.reduce((sum, p) => sum + p.totalDose_personmGy, 0);
 
   // Подготовка данных для листа
   const wsData: any[][] = [
@@ -23,7 +27,7 @@ export function exportToExcel(report: DOZ3Report): void {
   ];
 
   // Добавляем процедуры
-  report.procedures.forEach((proc, index) => {
+  procedures.forEach((proc, index) => {
     wsData.push([
       index + 1,
       proc.name,
@@ -36,7 +40,7 @@ export function exportToExcel(report: DOZ3Report): void {
   // Итоговая строка
   wsData.push(
     [],
-    ['', 'ИТОГО:', totalProcedures, '', report.totalDose_personmGy],
+    ['', 'ИТОГО:', totalProcedures, '', totalDose],
     [],
     [`Ответственное лицо: ______________ (${report.responsible.name}, ${report.responsible.position})`],
     [`Телефон: ${report.responsible.phone}`],

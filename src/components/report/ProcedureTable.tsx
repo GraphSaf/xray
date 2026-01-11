@@ -4,6 +4,7 @@ import { DENTAL_PROCEDURES } from '../../constants/procedures';
 import { Button, Select, Input, Alert } from '../common';
 import { validateProcedureDose } from '../../utils/validation';
 import { formatCollectiveDose } from '../../utils/formatters';
+import { getAvailableProcedures, getDemoModeMessage } from '../../utils/demoMode';
 
 export const ProcedureTable: React.FC = () => {
   const currentReport = useDOZ3Store((state) => state.currentReport);
@@ -74,7 +75,10 @@ export const ProcedureTable: React.FC = () => {
     });
   };
 
-  const procedureOptions = DENTAL_PROCEDURES.map(p => ({
+  const availableProcedures = getAvailableProcedures();
+  const demoModeMessage = getDemoModeMessage();
+
+  const procedureOptions = availableProcedures.map(p => ({
     value: p.id,
     label: p.name
   }));
@@ -106,6 +110,12 @@ export const ProcedureTable: React.FC = () => {
       {error && (
         <Alert type="error" onClose={() => {}}>
           {error}
+        </Alert>
+      )}
+
+      {demoModeMessage && (
+        <Alert type="info" onClose={() => {}}>
+          {demoModeMessage}
         </Alert>
       )}
 
