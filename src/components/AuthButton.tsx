@@ -16,6 +16,48 @@ export function AuthButton() {
       setUser(pb.authStore.model);
     }
 
+    // Обработка OAuth callback
+    const handleOAuthCallback = async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const code = urlParams.get('code');
+      const state = urlParams.get('state');
+
+      if (code && state) {
+        try {
+          const providerData = localStorage.getItem('oauth_provider');
+          if (!providerData) {
+            console.error('No provider data found');
+            return;
+          }
+
+          const provider = JSON.parse(providerData);
+
+          // Обмениваем code на токен через PocketBase
+          const redirectUrl = `${window.location.origin}${window.location.pathname}`;
+
+          const authData = await pb.collection('users').authWithOAuth2Code(
+            provider.name,
+            code,
+            provider.codeVerifier,
+            redirectUrl
+          );
+
+          console.log('Auth successful:', authData);
+
+          // Очищаем localStorage и URL
+          localStorage.removeItem('oauth_provider');
+          window.history.replaceState({}, '', window.location.pathname);
+
+          setUser(pb.authStore.model);
+        } catch (error) {
+          console.error('OAuth callback error:', error);
+          alert('Ошибка авторизации: ' + (error as Error).message);
+        }
+      }
+    };
+
+    handleOAuthCallback();
+
     return unsubscribe;
   }, []);
 
@@ -23,18 +65,33 @@ export function AuthButton() {
     try {
       setLoading(true);
 
-      // Используем redirect flow вместо popup для мобильной совместимости
-      const authData = await pb.collection('users').authWithOAuth2({
-        provider: 'vk',
-        urlCallback: (url) => {
-          // Редирект на VK ID OAuth
-          window.location.href = url;
-        },
-      });
+      // Получаем OAuth провайдеры напрямую через API
+      const response = await fetch(`${pb.baseUrl}/api/collections/users/auth-methods`);
+      const data = await response.json();
 
-      // Этот код не выполнится т.к. произойдет редирект
-      console.log('Auth successful:', authData);
-      setUser(pb.authStore.model);
+      console.log('Auth methods:', data);
+
+      const vkProvider = data.authProviders?.find((p: any) => p.name === 'vk');
+
+      if (!vkProvider) {
+        alert('VK провайдер не настроен в PocketBase');
+        setLoading(false);
+        return;
+      }
+
+      // Сохраняем данные провайдера для обработки callback
+      localStorage.setItem('oauth_provider', JSON.stringify(vkProvider));
+
+      // Формируем правильный redirect_uri для PocketBase
+      const redirectUrl = `${window.location.origin}${window.location.pathname}`;
+
+      // PocketBase authUrl уже содержит все параметры кроме redirect_uri
+      const authUrl = `${vkProvider.authUrl}${encodeURIComponent(redirectUrl)}`;
+
+      console.log('Redirecting to:', authUrl);
+
+      // Редирект на VK OAuth
+      window.location.href = authUrl;
     } catch (error) {
       console.error('VK login error:', error);
       alert('Ошибка при входе через VK: ' + (error as Error).message);
