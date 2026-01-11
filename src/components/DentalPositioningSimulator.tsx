@@ -6,38 +6,43 @@ import { useState } from 'react';
 function PatientHead() {
   return (
     <group position={[0, 0, 0]}>
-      {/* Голова */}
-      <Sphere args={[1, 32, 32]} position={[0, 0, 0]}>
-        <meshStandardMaterial color="#ffdbac" />
+      {/* Голова (полупрозрачная, чтобы видеть зубы) */}
+      <Sphere args={[1, 32, 32]} position={[0, 0.2, 0]}>
+        <meshStandardMaterial color="#ffdbac" transparent opacity={0.7} />
       </Sphere>
 
-      {/* Верхняя челюсть */}
-      <Box args={[0.8, 0.2, 0.6]} position={[0, -0.3, 0.4]}>
-        <meshStandardMaterial color="#f0e6d2" />
+      {/* Шея */}
+      <Cylinder args={[0.4, 0.45, 0.6, 16]} position={[0, -1, 0]}>
+        <meshStandardMaterial color="#ffdbac" />
+      </Cylinder>
+
+      {/* Верхняя челюсть - ВЫНЕСЕНА ВПЕРЕД */}
+      <Box args={[1.0, 0.3, 0.4]} position={[0, -0.1, 0.85]}>
+        <meshStandardMaterial color="#f5deb3" />
       </Box>
 
-      {/* Нижняя челюсть */}
-      <Box args={[0.7, 0.2, 0.5]} position={[0, -0.6, 0.35]}>
-        <meshStandardMaterial color="#f0e6d2" />
+      {/* Нижняя челюсть - ВЫНЕСЕНА ВПЕРЕД */}
+      <Box args={[0.9, 0.3, 0.35]} position={[0, -0.5, 0.8]}>
+        <meshStandardMaterial color="#f5deb3" />
       </Box>
 
-      {/* Упрощенные зубы (верхний ряд) */}
+      {/* Упрощенные зубы (верхний ряд) - УВЕЛИЧЕНЫ и ВЫНЕСЕНЫ */}
       {Array.from({ length: 8 }).map((_, i) => (
         <Box
           key={`upper-${i}`}
-          args={[0.08, 0.15, 0.08]}
-          position={[-0.28 + i * 0.08, -0.2, 0.5]}
+          args={[0.1, 0.2, 0.1]}
+          position={[-0.35 + i * 0.1, 0, 1.0]}
         >
           <meshStandardMaterial color="#ffffff" />
         </Box>
       ))}
 
-      {/* Упрощенные зубы (нижний ряд) */}
+      {/* Упрощенные зубы (нижний ряд) - УВЕЛИЧЕНЫ и ВЫНЕСЕНЫ */}
       {Array.from({ length: 8 }).map((_, i) => (
         <Box
           key={`lower-${i}`}
-          args={[0.08, 0.15, 0.08]}
-          position={[-0.24 + i * 0.08, -0.5, 0.45]}
+          args={[0.1, 0.2, 0.1]}
+          position={[-0.35 + i * 0.1, -0.35, 0.95]}
         >
           <meshStandardMaterial color="#ffffff" />
         </Box>
@@ -143,8 +148,8 @@ export function DentalPositioningSimulator() {
 
         {/* Объекты сцены */}
         <PatientHead />
-        <XRayMachine />
-        <FilmSensor />
+        <XRayMachine position={[2.5, 0, 0]} />
+        <FilmSensor position={[0, -0.2, 1.3]} />
 
         {/* Оси координат для ориентации */}
         <axesHelper args={[2]} />
