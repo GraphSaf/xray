@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { AuthButton } from '../components/AuthButton';
+import { DentalPositioningSimulator } from '../components/DentalPositioningSimulator';
 import { useState } from 'react';
 
 export function PositioningPage() {
@@ -36,7 +37,7 @@ export function PositioningPage() {
                   : 'bg-white text-gray-600 hover:bg-gray-50'
               }`}
             >
-              🦷 3D Симулятор (Virtual Patient Simulator)
+              🦷 3D Симулятор позиционирования
             </button>
             <button
               onClick={() => setActiveTab('guide')}
@@ -53,37 +54,30 @@ export function PositioningPage() {
 
         {/* Content */}
         {activeTab === 'simulator' ? (
-          <div className="bg-white rounded-b-xl shadow-lg p-12 text-center">
-            <div className="w-20 h-20 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <svg className="w-10 h-10 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-              </svg>
+          <div className="bg-white rounded-b-xl shadow-lg overflow-hidden">
+            {/* Описание */}
+            <div className="bg-blue-50 border-b border-blue-200 p-4">
+              <h2 className="text-lg font-bold text-gray-900 mb-2">
+                🦷 Интерактивный 3D симулятор позиционирования
+              </h2>
+              <p className="text-sm text-gray-700">
+                Базовая визуализация позиционирования пациента и рентген-аппарата при интраоральной рентгенографии.
+                Используйте мышь для управления камерой.
+              </p>
             </div>
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Симулятор в разработке</h2>
-            <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
-              Мы работаем над интеграцией 3D симулятора для обучения позиционированию пациента
-              и оборудования при рентгенографии зубов.
-            </p>
-            <div className="space-y-4 text-left max-w-md mx-auto bg-gray-50 rounded-lg p-6">
-              <h3 className="font-semibold text-gray-900">Планируемые возможности:</h3>
-              <ul className="space-y-2 text-gray-600">
-                <li className="flex items-start">
-                  <span className="text-indigo-600 mr-2">✓</span>
-                  3D визуализация позиционирования пациента
-                </li>
-                <li className="flex items-start">
-                  <span className="text-indigo-600 mr-2">✓</span>
-                  Настройка углов и расстояний рентген-аппарата
-                </li>
-                <li className="flex items-start">
-                  <span className="text-indigo-600 mr-2">✓</span>
-                  Виртуальное выполнение снимков FMX
-                </li>
-                <li className="flex items-start">
-                  <span className="text-indigo-600 mr-2">✓</span>
-                  Анализ качества виртуальных снимков
-                </li>
-              </ul>
+
+            {/* 3D Симулятор */}
+            <div className="p-4" style={{ height: '700px' }}>
+              <DentalPositioningSimulator />
+            </div>
+
+            {/* Информация */}
+            <div className="bg-amber-50 border-t border-amber-200 p-4 text-sm">
+              <p className="text-amber-800">
+                <strong>Статус:</strong> Базовая версия (v0.1) - упрощенная 3D визуализация.
+                В разработке: интерактивное управление углами, расчет параллельной и биссектрисной техники,
+                симуляция снимков.
+              </p>
             </div>
           </div>
         ) : (
