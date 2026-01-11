@@ -1,49 +1,63 @@
-name: Deploy to GitHub Pages
+name: Deploy to Server
 
 on:
   push:
     branches:
-      - main
       - claude/radiation-dose-reporting-app-RM8Cf
-  workflow_dispatch:
-
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-  deployments: write
-
-concurrency:
-  group: "pages"
-  cancel-in-progress: false
 
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
-
       - name: Install dependencies
         run: npm ci
 
-      - name: Build
+      - name: Create production env
+        run: echo "VITE_POCKETBASE_URL=https://xrayhub.ru" > .env.production
+
+      - name: Build project
         run: npm run build
 
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+      - name: Deploy to server via SSH
+        uses: appleboy/ssh-action@v1.2.0
         with:
-          path: ./dist
+          host: ${{secrets.SERVER_HOST}}
+          username: ${{secrets.SERVER_USER}}
+          password: ${{secrets.SERVER_PASSWORD}}
+          script: |
+            if [ -d /var/www/doz3/xray ]; then
+              cp -r /var/www/doz3/xray /var/www/doz3/xray.backup.$(date +%Y%m%d_%H%M%S)
+              cd /var/www/doz3 && ls -t xray.backup.* | tail -n +4 | xargs -r rm -rf
+            fi
+            rm -rf /var/www/doz3/xray/*
 
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+      - name: Copy files to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{secrets.SERVER_HOST}}
+          username: ${{secrets.SERVER_USER}}
+          password: ${{secrets.SERVER_PASSWORD}}
+          source: "dist/*"
+          target: "/var/www/doz3/xray/"
+          strip_components: 1
+
+      - name: Set permissions
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{secrets.SERVER_HOST}}
+          username: ${{secrets.SERVER_USER}}
+          password: ${{secrets.SERVER_PASSWORD}}
+          script: |
+            chown -R www-data:www-data /var/www/doz3/xray
+            chmod -R 755 /var/www/doz3/xray
+            echo "Deployment completed!"

@@ -23,19 +23,21 @@ export function AuthButton() {
     try {
       setLoading(true);
 
-      // PocketBase автоматически:
-      // - Использует VK ID OAuth 2.1 (не устаревший oauth.vk.com)
-      // - Генерирует PKCE код для безопасности
-      // - Управляет state параметром
-      // - Обменивает code на токен через backend
-      await pb.collection('users').authWithOAuth2({ provider: 'vk' });
+      // Используем redirect flow вместо popup для мобильной совместимости
+      const authData = await pb.collection('users').authWithOAuth2({
+        provider: 'vk',
+        urlCallback: (url) => {
+          // Редирект на VK ID OAuth
+          window.location.href = url;
+        },
+      });
 
-      // Авторизация успешна, пользователь в authStore
+      // Этот код не выполнится т.к. произойдет редирект
+      console.log('Auth successful:', authData);
       setUser(pb.authStore.model);
     } catch (error) {
       console.error('VK login error:', error);
       alert('Ошибка при входе через VK: ' + (error as Error).message);
-    } finally {
       setLoading(false);
     }
   };
