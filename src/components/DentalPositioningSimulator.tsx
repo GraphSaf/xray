@@ -2,45 +2,19 @@ import { Canvas } from '@react-three/fiber';
 import { OrbitControls, PerspectiveCamera, Grid, Box, Cone, Cylinder, useGLTF } from '@react-three/drei';
 import { useState, Suspense } from 'react';
 
-// Компонент 3D модели зубов с детальным логированием
+// Компонент 3D модели зубов
 function TeethModel() {
-  console.log('[TeethModel] Starting to load model from /models/teeth.glb');
+  const { scene } = useGLTF('/models/teeth.glb');
+  const clonedScene = scene.clone(true);
 
-  try {
-    const gltf = useGLTF('/models/teeth.glb');
-    console.log('[TeethModel] Model loaded successfully:', gltf);
-    console.log('[TeethModel] Scene:', gltf.scene);
-    console.log('[TeethModel] Scene children count:', gltf.scene.children.length);
-
-    // Клонируем сцену
-    const clonedScene = gltf.scene.clone(true);
-    console.log('[TeethModel] Scene cloned, rendering primitive');
-
-    return (
-      <primitive
-        object={clonedScene}
-        position={[0, 0, 0]}
-        rotation={[0, 0, 0]}
-        scale={1}
-      />
-    );
-  } catch (error) {
-    console.error('[TeethModel] Error loading model:', error);
-    if (error instanceof Error) {
-      console.error('[TeethModel] Error details:', {
-        message: error.message,
-        stack: error.stack,
-        name: error.name
-      });
-    }
-
-    // Fallback - красный куб
-    return (
-      <Box args={[1, 1, 1]} position={[0, 0, 0]}>
-        <meshStandardMaterial color="#ff0000" />
-      </Box>
-    );
-  }
+  return (
+    <primitive
+      object={clonedScene}
+      position={[0, 0, 0]}
+      rotation={[0, 0, 0]}
+      scale={1}
+    />
+  );
 }
 
 // Компонент загрузки
@@ -53,7 +27,6 @@ function LoadingFallback() {
 }
 
 // Предзагрузка модели
-console.log('[DentalSimulator] Preloading teeth model...');
 useGLTF.preload('/models/teeth.glb');
 
 // Компонент рентген-аппарата
@@ -128,14 +101,26 @@ export function DentalPositioningSimulator() {
         />
 
         {/* Освещение */}
-        <ambientLight intensity={0.4} />
+        <ambientLight intensity={0.8} />
         <directionalLight
           position={[5, 5, 5]}
-          intensity={1}
+          intensity={1.5}
           castShadow
           shadow-mapSize={[1024, 1024]}
         />
-        <pointLight position={[-5, 5, 2]} intensity={0.5} />
+        <directionalLight
+          position={[-5, 5, -5]}
+          intensity={1}
+        />
+        <pointLight position={[-5, 5, 2]} intensity={0.8} />
+        <pointLight position={[5, -2, 5]} intensity={0.6} color="#ffffff" />
+        <spotLight
+          position={[0, 10, 0]}
+          angle={0.6}
+          penumbra={0.5}
+          intensity={1.2}
+          castShadow
+        />
 
         {/* Сетка пола */}
         <Grid
