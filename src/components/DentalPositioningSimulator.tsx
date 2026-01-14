@@ -4,20 +4,37 @@ import { useState } from 'react';
 
 // Компонент 3D модели зубов
 function TeethModel() {
-  const { scene } = useGLTF('/models/teeth.glb');
+  try {
+    const { scene } = useGLTF('/models/teeth.glb');
 
-  return (
-    <primitive
-      object={scene}
-      position={[0, 0, 0]}
-      rotation={[0, 0, 0]}
-      scale={1}
-    />
-  );
+    // Клонируем сцену чтобы избежать конфликтов
+    const clonedScene = scene.clone(true);
+
+    return (
+      <primitive
+        object={clonedScene}
+        position={[0, 0, 0]}
+        rotation={[0, 0, 0]}
+        scale={0.01}
+      />
+    );
+  } catch (error) {
+    console.error('Error loading teeth model:', error);
+    // Fallback - показываем простой куб если модель не загрузилась
+    return (
+      <Box args={[1, 1, 1]} position={[0, 0, 0]}>
+        <meshStandardMaterial color="#ff0000" />
+      </Box>
+    );
+  }
 }
 
 // Предзагрузка модели
-useGLTF.preload('/models/teeth.glb');
+try {
+  useGLTF.preload('/models/teeth.glb');
+} catch (error) {
+  console.error('Failed to preload teeth model:', error);
+}
 
 // Компонент рентген-аппарата
 function XRayMachine({
