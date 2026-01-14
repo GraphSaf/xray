@@ -35,10 +35,18 @@ jobs:
           username: ${{secrets.SERVER_USER}}
           key: ${{secrets.SSH_PRIVATE_KEY}}
           script: |
+            # Сохраняем папку models если она есть
+            if [ -d /var/www/doz3/models ]; then
+              cp -r /var/www/doz3/models /tmp/doz3-models-backup
+            fi
+
+            # Создаем бэкап и удаляем старые
             if [ -d /var/www/doz3 ]; then
               cp -r /var/www/doz3 /var/www/doz3.backup.$(date +%Y%m%d_%H%M%S)
               cd /var/www && ls -t doz3.backup.* | tail -n +4 | xargs -r rm -rf
             fi
+
+            # Удаляем содержимое
             rm -rf /var/www/doz3/*
 
       - name: Copy files to server
@@ -51,13 +59,21 @@ jobs:
           target: "/var/www/doz3/"
           strip_components: 1
 
-      - name: Set permissions
+      - name: Restore models and set permissions
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{secrets.SERVER_HOST}}
           username: ${{secrets.SERVER_USER}}
           key: ${{secrets.SSH_PRIVATE_KEY}}
           script: |
+            # Восстанавливаем папку models из бэкапа
+            if [ -d /tmp/doz3-models-backup ]; then
+              cp -r /tmp/doz3-models-backup /var/www/doz3/models
+              rm -rf /tmp/doz3-models-backup
+              echo "Models folder restored from backup"
+            fi
+
+            # Устанавливаем права
             chown -R www-data:www-data /var/www/doz3
             chmod -R 755 /var/www/doz3
             echo "Deployment completed!"
