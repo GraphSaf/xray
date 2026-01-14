@@ -1,55 +1,23 @@
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls, PerspectiveCamera, Grid, Box, Sphere, Cone, Cylinder } from '@react-three/drei';
+import { OrbitControls, PerspectiveCamera, Grid, Box, Cone, Cylinder, useGLTF } from '@react-three/drei';
 import { useState } from 'react';
 
-// Компонент головы пациента с челюстью
-function PatientHead() {
+// Компонент 3D модели зубов
+function TeethModel() {
+  const { scene } = useGLTF('/models/teeth.glb');
+
   return (
-    <group position={[0, 0, 0]}>
-      {/* Голова (полупрозрачная, чтобы видеть зубы) */}
-      <Sphere args={[1, 32, 32]} position={[0, 0.2, 0]}>
-        <meshStandardMaterial color="#ffdbac" transparent opacity={0.7} />
-      </Sphere>
-
-      {/* Шея */}
-      <Cylinder args={[0.4, 0.45, 0.6, 16]} position={[0, -1, 0]}>
-        <meshStandardMaterial color="#ffdbac" />
-      </Cylinder>
-
-      {/* Верхняя челюсть - ВЫНЕСЕНА ВПЕРЕД */}
-      <Box args={[1.0, 0.3, 0.4]} position={[0, -0.1, 0.85]}>
-        <meshStandardMaterial color="#f5deb3" />
-      </Box>
-
-      {/* Нижняя челюсть - ВЫНЕСЕНА ВПЕРЕД */}
-      <Box args={[0.9, 0.3, 0.35]} position={[0, -0.5, 0.8]}>
-        <meshStandardMaterial color="#f5deb3" />
-      </Box>
-
-      {/* Упрощенные зубы (верхний ряд) - УВЕЛИЧЕНЫ и ВЫНЕСЕНЫ */}
-      {Array.from({ length: 8 }).map((_, i) => (
-        <Box
-          key={`upper-${i}`}
-          args={[0.1, 0.2, 0.1]}
-          position={[-0.35 + i * 0.1, 0, 1.0]}
-        >
-          <meshStandardMaterial color="#ffffff" />
-        </Box>
-      ))}
-
-      {/* Упрощенные зубы (нижний ряд) - УВЕЛИЧЕНЫ и ВЫНЕСЕНЫ */}
-      {Array.from({ length: 8 }).map((_, i) => (
-        <Box
-          key={`lower-${i}`}
-          args={[0.1, 0.2, 0.1]}
-          position={[-0.35 + i * 0.1, -0.35, 0.95]}
-        >
-          <meshStandardMaterial color="#ffffff" />
-        </Box>
-      ))}
-    </group>
+    <primitive
+      object={scene}
+      position={[0, 0, 0]}
+      rotation={[0, 0, 0]}
+      scale={1}
+    />
   );
 }
+
+// Предзагрузка модели
+useGLTF.preload('/models/teeth.glb');
 
 // Компонент рентген-аппарата
 function XRayMachine({
@@ -147,7 +115,7 @@ export function DentalPositioningSimulator() {
         />
 
         {/* Объекты сцены */}
-        <PatientHead />
+        <TeethModel />
         <XRayMachine position={[2.5, 0, 0]} />
         <FilmSensor position={[0, -0.2, 1.3]} />
 
