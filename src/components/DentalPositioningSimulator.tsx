@@ -1,26 +1,40 @@
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, PerspectiveCamera, Grid, Box, Cone, Cylinder, useGLTF } from '@react-three/drei';
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 
-// Компонент 3D модели зубов
+// Компонент 3D модели зубов с детальным логированием
 function TeethModel() {
-  try {
-    const { scene } = useGLTF('/models/teeth.glb');
+  console.log('[TeethModel] Starting to load model from /models/teeth.glb');
 
-    // Клонируем сцену чтобы избежать конфликтов
-    const clonedScene = scene.clone(true);
+  try {
+    const gltf = useGLTF('/models/teeth.glb');
+    console.log('[TeethModel] Model loaded successfully:', gltf);
+    console.log('[TeethModel] Scene:', gltf.scene);
+    console.log('[TeethModel] Scene children count:', gltf.scene.children.length);
+
+    // Клонируем сцену
+    const clonedScene = gltf.scene.clone(true);
+    console.log('[TeethModel] Scene cloned, rendering primitive');
 
     return (
       <primitive
         object={clonedScene}
         position={[0, 0, 0]}
         rotation={[0, 0, 0]}
-        scale={0.01}
+        scale={1}
       />
     );
   } catch (error) {
-    console.error('Error loading teeth model:', error);
-    // Fallback - показываем простой куб если модель не загрузилась
+    console.error('[TeethModel] Error loading model:', error);
+    if (error instanceof Error) {
+      console.error('[TeethModel] Error details:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      });
+    }
+
+    // Fallback - красный куб
     return (
       <Box args={[1, 1, 1]} position={[0, 0, 0]}>
         <meshStandardMaterial color="#ff0000" />
@@ -29,12 +43,18 @@ function TeethModel() {
   }
 }
 
-// Предзагрузка модели
-try {
-  useGLTF.preload('/models/teeth.glb');
-} catch (error) {
-  console.error('Failed to preload teeth model:', error);
+// Компонент загрузки
+function LoadingFallback() {
+  return (
+    <Box args={[1, 1, 1]} position={[0, 0, 0]}>
+      <meshStandardMaterial color="#ffff00" emissive="#ffff00" emissiveIntensity={0.5} />
+    </Box>
+  );
 }
+
+// Предзагрузка модели
+console.log('[DentalSimulator] Preloading teeth model...');
+useGLTF.preload('/models/teeth.glb');
 
 // Компонент рентген-аппарата
 function XRayMachine({
@@ -132,7 +152,9 @@ export function DentalPositioningSimulator() {
         />
 
         {/* Объекты сцены */}
-        <TeethModel />
+        <Suspense fallback={<LoadingFallback />}>
+          <TeethModel />
+        </Suspense>
         <XRayMachine position={[2.5, 0, 0]} />
         <FilmSensor position={[0, -0.2, 1.3]} />
 
