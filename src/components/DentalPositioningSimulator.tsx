@@ -1,36 +1,34 @@
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls, PerspectiveCamera, Grid, Box, Cone, Cylinder, useGLTF } from '@react-three/drei';
-import { useState, Suspense } from 'react';
+import { OrbitControls, PerspectiveCamera, Grid, Box, Cone, Cylinder } from '@react-three/drei';
+import { useState } from 'react';
 
-// URL модели зубов в S3 хранилище
-const TEETH_MODEL_URL = 'https://s3.ru1.storage.beget.cloud/0f31e7f56d88-xrayhub/3d_models%2Fteeth.glb';
-
-// Компонент 3D модели зубов
-function TeethModel() {
-  const { scene } = useGLTF(TEETH_MODEL_URL);
-  const clonedScene = scene.clone(true);
-
+// Простая 3D модель челюстей и зубов
+function SimpleTeethModel() {
   return (
-    <primitive
-      object={clonedScene}
-      position={[0, 0, 0]}
-      rotation={[0, 0, 0]}
-      scale={1}
-    />
+    <group position={[0, 0, 0]}>
+      {/* Верхняя челюсть */}
+      <Box args={[1.2, 0.3, 0.8]} position={[0, 0.2, 0]}>
+        <meshStandardMaterial color="#f5f5dc" roughness={0.8} />
+      </Box>
+      {/* Нижняя челюсть */}
+      <Box args={[1.2, 0.3, 0.8]} position={[0, -0.2, 0]}>
+        <meshStandardMaterial color="#f5f5dc" roughness={0.8} />
+      </Box>
+      {/* Зубы верхние */}
+      {Array.from({ length: 8 }).map((_, i) => (
+        <Box key={`upper-${i}`} args={[0.12, 0.2, 0.12]} position={[-0.6 + i * 0.17, 0.35, 0.3]}>
+          <meshStandardMaterial color="#ffffff" roughness={0.3} />
+        </Box>
+      ))}
+      {/* Зубы нижние */}
+      {Array.from({ length: 8 }).map((_, i) => (
+        <Box key={`lower-${i}`} args={[0.12, 0.2, 0.12]} position={[-0.6 + i * 0.17, -0.35, 0.3]}>
+          <meshStandardMaterial color="#ffffff" roughness={0.3} />
+        </Box>
+      ))}
+    </group>
   );
 }
-
-// Компонент загрузки
-function LoadingFallback() {
-  return (
-    <Box args={[1, 1, 1]} position={[0, 0, 0]}>
-      <meshStandardMaterial color="#ffff00" emissive="#ffff00" emissiveIntensity={0.5} />
-    </Box>
-  );
-}
-
-// Предзагрузка модели
-useGLTF.preload(TEETH_MODEL_URL);
 
 // Компонент рентген-аппарата
 function XRayMachine({
@@ -140,9 +138,7 @@ export function DentalPositioningSimulator() {
         />
 
         {/* Объекты сцены */}
-        <Suspense fallback={<LoadingFallback />}>
-          <TeethModel />
-        </Suspense>
+        <SimpleTeethModel />
         <XRayMachine position={[2.5, 0, 0]} />
         <FilmSensor position={[0, -0.2, 1.3]} />
 
