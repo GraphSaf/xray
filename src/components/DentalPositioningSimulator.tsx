@@ -2,9 +2,12 @@ import { Canvas } from '@react-three/fiber';
 import { OrbitControls, PerspectiveCamera, Grid, Box, Cone, Cylinder, useGLTF } from '@react-three/drei';
 import { useState, Suspense } from 'react';
 
+// URL модели зубов в S3 хранилище
+const TEETH_MODEL_URL = 'https://s3.ru1.storage.beget.cloud/0f31e7f56d88-xrayhub/3d_models%2Fteeth.glb';
+
 // Компонент 3D модели зубов
 function TeethModel() {
-  const { scene } = useGLTF('/models/teeth.glb');
+  const { scene } = useGLTF(TEETH_MODEL_URL);
   const clonedScene = scene.clone(true);
 
   return (
@@ -27,7 +30,7 @@ function LoadingFallback() {
 }
 
 // Предзагрузка модели
-useGLTF.preload('/models/teeth.glb');
+useGLTF.preload(TEETH_MODEL_URL);
 
 // Компонент рентген-аппарата
 function XRayMachine({
