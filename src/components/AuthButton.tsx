@@ -112,16 +112,16 @@ export function AuthButton() {
             <img
               src={user.avatar}
               alt="Avatar"
-              className="w-8 h-8 rounded-full border-2 border-gray-200"
+              className="w-10 h-10 rounded-full border-2 border-gray-200"
             />
           )}
-          <span className="text-base font-semibold text-black">
+          <span className="text-lg font-semibold text-black">
             {user.name || user.username || user.email}
           </span>
         </div>
         <button
           onClick={handleLogout}
-          className="px-4 py-2 bg-gray-100 text-black font-semibold rounded-2xl hover:bg-gray-200 transition-colors text-base"
+          className="px-6 py-3 bg-gray-100 text-black font-semibold rounded-2xl hover:bg-gray-200 transition-colors text-base"
         >
           Выйти
         </button>
@@ -133,7 +133,7 @@ export function AuthButton() {
     <button
       onClick={handleVKLogin}
       disabled={loading}
-      className="px-6 py-3 bg-black text-white font-semibold rounded-2xl hover:bg-gray-800 transition-colors disabled:opacity-50 text-base sm:text-lg"
+      className="px-6 py-3 bg-black text-white font-semibold rounded-2xl hover:bg-gray-800 transition-colors disabled:opacity-50 text-base"
     >
       {loading ? 'Загрузка...' : 'Войти'}
     </button>
