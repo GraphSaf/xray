@@ -1,9 +1,41 @@
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls, PerspectiveCamera, Grid, Box, Cone, Cylinder } from '@react-three/drei';
-import { useState } from 'react';
+import { OrbitControls, PerspectiveCamera, Grid, Box, Cone, Cylinder, useGLTF } from '@react-three/drei';
+import { useState, Suspense } from 'react';
 
-// Простая 3D модель челюстей и зубов
-function SimpleTeethModel() {
+// URL модели зубов в S3 хранилище Beget
+const TEETH_MODEL_URL = 'https://s3.ru1.storage.beget.cloud/0f31e7f56d88-xrayhub/teeth.glb';
+
+// Компонент 3D модели зубов из GLB файла
+function TeethModel() {
+  try {
+    const { scene } = useGLTF(TEETH_MODEL_URL);
+    const clonedScene = scene.clone(true);
+
+    return (
+      <primitive
+        object={clonedScene}
+        position={[0, 0, 0]}
+        rotation={[0, 0, 0]}
+        scale={0.01}
+      />
+    );
+  } catch (error) {
+    console.error('Error loading teeth model:', error);
+    return <FallbackTeethModel />;
+  }
+}
+
+// Компонент загрузки (желтый куб)
+function LoadingCube() {
+  return (
+    <Box args={[1, 1, 1]} position={[0, 0, 0]}>
+      <meshStandardMaterial color="#ffff00" emissive="#ffff00" emissiveIntensity={0.5} />
+    </Box>
+  );
+}
+
+// Запасной вариант если модель не загрузится
+function FallbackTeethModel() {
   return (
     <group position={[0, 0, 0]}>
       {/* Верхняя челюсть */}
@@ -29,6 +61,9 @@ function SimpleTeethModel() {
     </group>
   );
 }
+
+// Предзагрузка модели
+useGLTF.preload(TEETH_MODEL_URL);
 
 // Компонент рентген-аппарата
 function XRayMachine({
@@ -138,7 +173,9 @@ export function DentalPositioningSimulator() {
         />
 
         {/* Объекты сцены */}
-        <SimpleTeethModel />
+        <Suspense fallback={<LoadingCube />}>
+          <TeethModel />
+        </Suspense>
         <XRayMachine position={[2.5, 0, 0]} />
         <FilmSensor position={[0, -0.2, 1.3]} />
 
