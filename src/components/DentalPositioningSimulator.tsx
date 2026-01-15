@@ -1,28 +1,26 @@
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, PerspectiveCamera, Grid, Box, Cone, Cylinder, useGLTF } from '@react-three/drei';
-import { useState, Suspense } from 'react';
+import { Suspense } from 'react';
 
 // URL модели зубов в S3 хранилище Beget
 const TEETH_MODEL_URL = 'https://s3.ru1.storage.beget.cloud/0f31e7f56d88-xrayhub/teeth.glb';
 
 // Компонент 3D модели зубов из GLB файла
 function TeethModel() {
-  try {
-    const { scene } = useGLTF(TEETH_MODEL_URL);
-    const clonedScene = scene.clone(true);
+  const { scene } = useGLTF(TEETH_MODEL_URL);
+  const clonedScene = scene.clone(true);
 
-    return (
-      <primitive
-        object={clonedScene}
-        position={[0, 0, 0]}
-        rotation={[0, 0, 0]}
-        scale={0.01}
-      />
-    );
-  } catch (error) {
-    console.error('Error loading teeth model:', error);
-    return <FallbackTeethModel />;
-  }
+  console.log('[TeethModel] Model loaded successfully from S3');
+  console.log('[TeethModel] Scene:', clonedScene);
+
+  return (
+    <primitive
+      object={clonedScene}
+      position={[0, 0, 0]}
+      rotation={[0, 0, 0]}
+      scale={1}
+    />
+  );
 }
 
 // Компонент загрузки (желтый куб)
@@ -33,37 +31,6 @@ function LoadingCube() {
     </Box>
   );
 }
-
-// Запасной вариант если модель не загрузится
-function FallbackTeethModel() {
-  return (
-    <group position={[0, 0, 0]}>
-      {/* Верхняя челюсть */}
-      <Box args={[1.2, 0.3, 0.8]} position={[0, 0.2, 0]}>
-        <meshStandardMaterial color="#f5f5dc" roughness={0.8} />
-      </Box>
-      {/* Нижняя челюсть */}
-      <Box args={[1.2, 0.3, 0.8]} position={[0, -0.2, 0]}>
-        <meshStandardMaterial color="#f5f5dc" roughness={0.8} />
-      </Box>
-      {/* Зубы верхние */}
-      {Array.from({ length: 8 }).map((_, i) => (
-        <Box key={`upper-${i}`} args={[0.12, 0.2, 0.12]} position={[-0.6 + i * 0.17, 0.35, 0.3]}>
-          <meshStandardMaterial color="#ffffff" roughness={0.3} />
-        </Box>
-      ))}
-      {/* Зубы нижние */}
-      {Array.from({ length: 8 }).map((_, i) => (
-        <Box key={`lower-${i}`} args={[0.12, 0.2, 0.12]} position={[-0.6 + i * 0.17, -0.35, 0.3]}>
-          <meshStandardMaterial color="#ffffff" roughness={0.3} />
-        </Box>
-      ))}
-    </group>
-  );
-}
-
-// Предзагрузка модели
-useGLTF.preload(TEETH_MODEL_URL);
 
 // Компонент рентген-аппарата
 function XRayMachine({
@@ -121,8 +88,6 @@ function FilmSensor({
 
 // Основной компонент симулятора
 export function DentalPositioningSimulator() {
-  const [showGuide, setShowGuide] = useState(true);
-
   return (
     <div className="w-full h-full relative bg-gray-900 rounded-lg overflow-hidden">
       {/* 3D Canvas */}
@@ -182,39 +147,6 @@ export function DentalPositioningSimulator() {
         {/* Оси координат для ориентации */}
         <axesHelper args={[2]} />
       </Canvas>
-
-      {/* UI панель управления */}
-      <div className="absolute top-4 left-4 bg-white bg-opacity-90 rounded-lg p-4 shadow-lg max-w-xs">
-        <h3 className="font-bold text-gray-900 mb-2">🦷 Симулятор позиционирования</h3>
-        <div className="text-sm text-gray-700 space-y-2">
-          <p><strong>Управление:</strong></p>
-          <ul className="text-xs space-y-1 ml-2">
-            <li>• ЛКМ + движение - вращение</li>
-            <li>• ПКМ + движение - перемещение</li>
-            <li>• Колесо мыши - приближение</li>
-          </ul>
-        </div>
-
-        <button
-          onClick={() => setShowGuide(!showGuide)}
-          className="mt-3 w-full px-3 py-2 bg-indigo-600 text-white text-sm font-semibold rounded hover:bg-indigo-700 transition-colors"
-        >
-          {showGuide ? 'Скрыть подсказки' : 'Показать подсказки'}
-        </button>
-      </div>
-
-      {/* Информационная панель */}
-      {showGuide && (
-        <div className="absolute bottom-4 right-4 bg-white bg-opacity-90 rounded-lg p-4 shadow-lg max-w-sm">
-          <h4 className="font-bold text-gray-900 mb-2 text-sm">Элементы сцены:</h4>
-          <ul className="text-xs text-gray-700 space-y-1">
-            <li>🟤 <strong>Голова пациента</strong> - положение лица с зубами</li>
-            <li>⚫ <strong>Рентген-аппарат</strong> - источник излучения с тубусом</li>
-            <li>🟦 <strong>Сенсор/пленка</strong> - приемник изображения</li>
-            <li>🟢 <strong>Луч</strong> - направление рентгеновского излучения</li>
-          </ul>
-        </div>
-      )}
     </div>
   );
 }
