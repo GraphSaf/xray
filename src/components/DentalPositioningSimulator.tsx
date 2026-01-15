@@ -89,7 +89,7 @@ function FilmSensor({
 // Основной компонент симулятора
 export function DentalPositioningSimulator() {
   return (
-    <div className="w-full h-full relative bg-gray-900 rounded-lg overflow-hidden">
+    <div className="w-full h-full relative bg-white rounded-lg overflow-hidden border-2 border-gray-200">
       {/* 3D Canvas */}
       <Canvas shadows>
         <PerspectiveCamera makeDefault position={[3, 2, 3]} fov={60} />
@@ -128,10 +128,10 @@ export function DentalPositioningSimulator() {
           args={[10, 10]}
           cellSize={0.5}
           cellThickness={0.5}
-          cellColor="#6b7280"
+          cellColor="#d1d5db"
           sectionSize={2}
           sectionThickness={1}
-          sectionColor="#4b5563"
+          sectionColor="#9ca3af"
           fadeDistance={20}
           fadeStrength={1}
           position={[0, -2, 0]}
@@ -143,9 +143,6 @@ export function DentalPositioningSimulator() {
         </Suspense>
         <XRayMachine position={[2.5, 0, 0]} />
         <FilmSensor position={[0, -0.2, 1.3]} />
-
-        {/* Оси координат для ориентации */}
-        <axesHelper args={[2]} />
       </Canvas>
     </div>
   );
