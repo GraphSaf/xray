@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { AuthButton } from '../components/AuthButton';
+import { Navigation } from '../components/Navigation';
 import { pb } from '../lib/pocketbase';
 
 export function LandingPage() {
@@ -7,23 +7,7 @@ export function LandingPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Header */}
-      <header className="bg-white border-b-2 border-gray-200">
-        <div className="max-w-7xl mx-auto py-6 px-6 sm:px-8 lg:px-12">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center space-x-3">
-              <div className="w-14 h-14 bg-black rounded-3xl flex items-center justify-center">
-                <span className="text-white font-bold text-2xl">X</span>
-              </div>
-              <div>
-                <span className="text-2xl font-bold text-black block">XrayHub</span>
-                <span className="text-sm text-gray-600">Стоматологическая рентгенография</span>
-              </div>
-            </div>
-            <AuthButton />
-          </div>
-        </div>
-      </header>
+      <Navigation />
 
       {/* Hero Section */}
       <main className="max-w-6xl mx-auto py-20 px-6 sm:px-8 lg:px-12">
@@ -39,26 +23,7 @@ export function LandingPage() {
 
         {/* Features - большие карточки */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-          {/* DOZ3 Card */}
-          <Link
-            to="/doz3"
-            className="bg-gray-50 rounded-3xl shadow-sm p-12 hover:shadow-xl transition-all border-4 border-transparent hover:border-black group"
-          >
-            <div className="w-20 h-20 bg-black rounded-3xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-              <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-            </div>
-            <h3 className="text-3xl font-bold text-black mb-4">Журнал доз (ДОЗ-3)</h3>
-            <p className="text-xl text-gray-700 mb-6 leading-relaxed">
-              Заполняйте форму учета доз облучения пациентов. Простой интерфейс - как на бумаге, только быстрее.
-            </p>
-            <div className="inline-block px-5 py-3 bg-black text-white rounded-2xl text-lg font-semibold">
-              Открыть журнал →
-            </div>
-          </Link>
-
-          {/* Positioning Card */}
+          {/* Positioning Card - ПЕРВАЯ */}
           <Link
             to="/positioning"
             className="bg-gray-50 rounded-3xl shadow-sm p-12 hover:shadow-xl transition-all border-4 border-transparent hover:border-black group"
@@ -77,7 +42,7 @@ export function LandingPage() {
             </div>
           </Link>
 
-          {/* CRM Card */}
+          {/* CRM Card - ВТОРАЯ */}
           <Link
             to="/crm"
             className="bg-gray-50 rounded-3xl shadow-sm p-12 hover:shadow-xl transition-all border-4 border-transparent hover:border-black group"
@@ -93,6 +58,25 @@ export function LandingPage() {
             </p>
             <div className="inline-block px-5 py-3 bg-white border-2 border-black text-black rounded-2xl text-lg font-semibold">
               Скоро откроется
+            </div>
+          </Link>
+
+          {/* DOZ3 Card - ТРЕТЬЯ */}
+          <Link
+            to="/doz3"
+            className="bg-gray-50 rounded-3xl shadow-sm p-12 hover:shadow-xl transition-all border-4 border-transparent hover:border-black group"
+          >
+            <div className="w-20 h-20 bg-black rounded-3xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+              <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+            <h3 className="text-3xl font-bold text-black mb-4">Журнал доз (ДОЗ-3)</h3>
+            <p className="text-xl text-gray-700 mb-6 leading-relaxed">
+              Заполняйте форму учета доз облучения пациентов. Простой интерфейс - как на бумаге, только быстрее.
+            </p>
+            <div className="inline-block px-5 py-3 bg-black text-white rounded-2xl text-lg font-semibold">
+              Открыть журнал →
             </div>
           </Link>
         </div>

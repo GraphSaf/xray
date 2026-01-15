@@ -1,5 +1,4 @@
-import { Link } from 'react-router-dom';
-import { AuthButton } from '../components/AuthButton';
+import { Navigation } from '../components/Navigation';
 import { DentalPositioningSimulator } from '../components/DentalPositioningSimulator';
 import { useState } from 'react';
 
@@ -8,22 +7,17 @@ export function PositioningPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      <header className="bg-white border-b-2 border-gray-200">
-        <div className="max-w-7xl mx-auto py-6 px-6 sm:px-8 lg:px-12">
-          <div className="flex justify-between items-center">
-            <div>
-              <Link to="/" className="text-lg text-gray-600 hover:text-black mb-2 inline-block font-semibold">
-                ← Назад на главную
-              </Link>
-              <h1 className="text-4xl font-bold text-black">Укладки и позиционирование</h1>
-              <p className="mt-2 text-xl text-gray-700">
-                Справочник для рентгенлаборантов стоматологических кабинетов
-              </p>
-            </div>
-            <AuthButton />
-          </div>
+      <Navigation />
+
+      {/* Page Header */}
+      <div className="bg-gray-50 border-b-2 border-gray-200">
+        <div className="max-w-7xl mx-auto py-8 px-6 sm:px-8 lg:px-12">
+          <h1 className="text-4xl font-bold text-black">Укладки и позиционирование</h1>
+          <p className="mt-2 text-xl text-gray-700">
+            Справочник для рентгенлаборантов стоматологических кабинетов
+          </p>
         </div>
-      </header>
+      </div>
 
       <main className="max-w-7xl mx-auto py-8 px-6 sm:px-8 lg:px-12">
         {/* Tabs */}
