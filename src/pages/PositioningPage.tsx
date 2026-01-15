@@ -223,13 +223,14 @@ export function PositioningPage() {
         ) : (
           <div className="bg-gray-50 rounded-3xl overflow-hidden">
             {/* 3D Симулятор */}
-            <div className="p-8" style={{ height: '800px' }}>
+            <div className="p-2 sm:p-4 md:p-8" style={{ height: '600px', minHeight: '600px' }}>
               <DentalPositioningSimulator />
             </div>
 
-            <div className="p-8 bg-white">
-              <p className="text-xl text-gray-700 leading-relaxed">
-                <strong>Примечание:</strong> 3D-модель в разработке. Сейчас здесь будет интерактивный тренажер для отработки позиционирования пациента и рентген-аппарата.
+            <div className="p-4 sm:p-6 md:p-8 bg-white">
+              <p className="text-base sm:text-lg md:text-xl text-gray-700 leading-relaxed">
+                <strong>Примечание:</strong> Используйте мышь или сенсорный экран для вращения сцены.
+                Кнопки со стрелками вращают зубы и датчик для имитации разных углов съемки.
               </p>
             </div>
           </div>
