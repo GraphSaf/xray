@@ -1,13 +1,14 @@
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, PerspectiveCamera, Box, Cone, Cylinder, useGLTF } from '@react-three/drei';
 import { Suspense, useState, useRef } from 'react';
+import * as React from 'react';
 import type { OrbitControls as OrbitControlsType } from 'three-stdlib';
 
 // URL модели зубов в S3 хранилище Beget
 const TEETH_MODEL_URL = 'https://s3.ru1.storage.beget.cloud/0f31e7f56d88-xrayhub/teeth.glb';
 
 // Компонент 3D модели зубов из GLB файла
-function TeethModel() {
+function TeethModel({ rotation }: { rotation: number }) {
   const { scene } = useGLTF(TEETH_MODEL_URL);
   const clonedScene = scene.clone(true);
 
@@ -18,7 +19,7 @@ function TeethModel() {
     <primitive
       object={clonedScene}
       position={[0, 0, 0]}
-      rotation={[0, 0, 0]}
+      rotation={[0, rotation, 0]}
       scale={1}
     />
   );
@@ -68,12 +69,14 @@ function XRayMachine({
 
 // Компонент пленки/сенсора
 function FilmSensor({
-  position = [0, 0, 0.8] as [number, number, number]
+  position = [0, 0, 0.5] as [number, number, number],
+  rotation = 0
 }: {
   position?: [number, number, number];
+  rotation?: number;
 }) {
   return (
-    <group position={position}>
+    <group position={position} rotation={[0, rotation, 0]}>
       {/* Держатель */}
       <Box args={[0.5, 0.6, 0.02]} position={[0, 0, 0]}>
         <meshStandardMaterial color="#3182ce" metalness={0.3} roughness={0.5} />
@@ -90,6 +93,8 @@ function FilmSensor({
 // Основной компонент симулятора
 export function DentalPositioningSimulator() {
   const [backgroundColor, setBackgroundColor] = useState<'white' | 'dark'>('white');
+  const [teethRotation, setTeethRotation] = useState(0);
+  const [sensorRotation, setSensorRotation] = useState(0);
   const controlsRef = useRef<OrbitControlsType>(null);
 
   const resetCamera = () => {
@@ -97,6 +102,32 @@ export function DentalPositioningSimulator() {
       controlsRef.current.reset();
     }
   };
+
+  const rotateLeft = () => {
+    setTeethRotation(prev => prev - (15 * Math.PI / 180)); // -15 градусов для зубов
+    setSensorRotation(prev => prev + (15 * Math.PI / 180)); // +15 градусов для датчика
+  };
+
+  const rotateRight = () => {
+    setTeethRotation(prev => prev + (15 * Math.PI / 180)); // +15 градусов для зубов
+    setSensorRotation(prev => prev - (15 * Math.PI / 180)); // -15 градусов для датчика
+  };
+
+  // Обработчик клавиатуры
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        rotateLeft();
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        rotateRight();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const bgColor = backgroundColor === 'white' ? '#ffffff' : '#374151';
   const containerBg = backgroundColor === 'white' ? 'bg-white' : 'bg-gray-700';
@@ -140,10 +171,10 @@ export function DentalPositioningSimulator() {
 
         {/* Объекты сцены */}
         <Suspense fallback={<LoadingCube />}>
-          <TeethModel />
+          <TeethModel rotation={teethRotation} />
         </Suspense>
         <XRayMachine position={[2.5, 0, 0]} />
-        <FilmSensor position={[0, -0.2, 1.3]} />
+        <FilmSensor position={[0, 0, 0.5]} rotation={sensorRotation} />
       </Canvas>
 
       {/* Панель управления */}
@@ -180,6 +211,24 @@ export function DentalPositioningSimulator() {
             title="Темный фон"
           >
             ⚫
+          </button>
+        </div>
+
+        {/* Кнопки вращения */}
+        <div className="flex gap-2">
+          <button
+            onClick={rotateLeft}
+            className="px-3 py-2 bg-black text-white font-semibold rounded-xl hover:bg-gray-800 transition-colors shadow-lg"
+            title="Повернуть влево (← стрелка)"
+          >
+            ←
+          </button>
+          <button
+            onClick={rotateRight}
+            className="px-3 py-2 bg-black text-white font-semibold rounded-xl hover:bg-gray-800 transition-colors shadow-lg"
+            title="Повернуть вправо (→ стрелка)"
+          >
+            →
           </button>
         </div>
       </div>
