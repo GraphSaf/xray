@@ -6,16 +6,19 @@ export function LandingPage() {
   const isAuthenticated = pb.authStore.isValid;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-white">
       {/* Header */}
-      <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
+      <header className="bg-white border-b-2 border-gray-200">
+        <div className="max-w-7xl mx-auto py-6 px-6 sm:px-8 lg:px-12">
           <div className="flex justify-between items-center">
-            <div className="flex items-center space-x-2">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-xl">X</span>
+            <div className="flex items-center space-x-3">
+              <div className="w-14 h-14 bg-black rounded-3xl flex items-center justify-center">
+                <span className="text-white font-bold text-2xl">X</span>
               </div>
-              <span className="text-xl font-bold text-gray-900">XrayHub</span>
+              <div>
+                <span className="text-2xl font-bold text-black block">XrayHub</span>
+                <span className="text-sm text-gray-600">Стоматологическая рентгенография</span>
+              </div>
             </div>
             <AuthButton />
           </div>
@@ -23,133 +26,94 @@ export function LandingPage() {
       </header>
 
       {/* Hero Section */}
-      <main className="max-w-7xl mx-auto py-16 px-4 sm:px-6 lg:px-8">
-        <div className="text-center">
-          <h1 className="text-5xl font-extrabold text-gray-900 sm:text-6xl">
-            Платформа для специалистов
-            <span className="block text-indigo-600">рентгенологических служб</span>
+      <main className="max-w-6xl mx-auto py-20 px-6 sm:px-8 lg:px-12">
+        <div className="text-center mb-24">
+          <h1 className="text-6xl font-bold text-black mb-6 leading-tight">
+            Платформа для<br/>
+            <span className="text-gray-800">рентгенлаборантов-стоматологов</span>
           </h1>
-          <p className="mt-6 text-xl text-gray-600 max-w-3xl mx-auto">
-            Современные инструменты для учета доз облучения, управления данными пациентов и справочные материалы по укладкам
+          <p className="text-2xl text-gray-700 max-w-4xl mx-auto leading-relaxed">
+            Простые инструменты для учета доз облучения и обучения правильному позиционированию при стоматологических снимках
           </p>
-
-          {!isAuthenticated && (
-            <div className="mt-10">
-              <p className="text-lg text-gray-700 mb-4">
-                Войдите через VK ID для доступа ко всем функциям платформы
-              </p>
-            </div>
-          )}
         </div>
 
-        {/* Features */}
-        <div className="mt-20 grid grid-cols-1 md:grid-cols-3 gap-8">
+        {/* Features - большие карточки */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
           {/* DOZ3 Card */}
           <Link
             to="/doz3"
-            className="bg-white rounded-xl shadow-lg p-8 hover:shadow-xl transition-shadow border-2 border-transparent hover:border-indigo-500"
+            className="bg-gray-50 rounded-3xl shadow-sm p-12 hover:shadow-xl transition-all border-4 border-transparent hover:border-black group"
           >
-            <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center mb-4">
-              <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-20 h-20 bg-black rounded-3xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+              <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
             </div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-2">Форма №3-ДОЗ</h3>
-            <p className="text-gray-600 mb-4">
-              Учет коллективных доз облучения пациентов при рентгенологических исследованиях
+            <h3 className="text-3xl font-bold text-black mb-4">Журнал доз (ДОЗ-3)</h3>
+            <p className="text-xl text-gray-700 mb-6 leading-relaxed">
+              Заполняйте форму учета доз облучения пациентов. Простой интерфейс - как на бумаге, только быстрее.
             </p>
-            <div className="text-sm text-gray-500">
-              <span className="inline-block px-3 py-1 bg-green-100 text-green-800 rounded-full">
-                Демо доступно без авторизации
-              </span>
-            </div>
-          </Link>
-
-          {/* CRM Card */}
-          <Link
-            to="/crm"
-            className="bg-white rounded-xl shadow-lg p-8 hover:shadow-xl transition-shadow border-2 border-transparent hover:border-indigo-500"
-          >
-            <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
-              <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-              </svg>
-            </div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-2">CRM Пациенты</h3>
-            <p className="text-gray-600 mb-4">
-              Онлайн система для заполнения индивидуальных доз облучения пациентов
-            </p>
-            <div className="text-sm text-gray-500">
-              <span className="inline-block px-3 py-1 bg-blue-100 text-blue-800 rounded-full">
-                В разработке
-              </span>
+            <div className="inline-block px-5 py-3 bg-black text-white rounded-2xl text-lg font-semibold">
+              Открыть журнал →
             </div>
           </Link>
 
           {/* Positioning Card */}
           <Link
             to="/positioning"
-            className="bg-white rounded-xl shadow-lg p-8 hover:shadow-xl transition-shadow border-2 border-transparent hover:border-indigo-500"
+            className="bg-gray-50 rounded-3xl shadow-sm p-12 hover:shadow-xl transition-all border-4 border-transparent hover:border-black group"
           >
-            <div className="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center mb-4">
-              <svg className="w-6 h-6 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+            <div className="w-20 h-20 bg-black rounded-3xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+              <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1M4 7l2-1M4 7l2 1M4 7v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5M6 18l-2-1v-2.5M18 18l2-1v-2.5" />
               </svg>
             </div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-2">3D Симулятор стоматологии</h3>
-            <p className="text-gray-600 mb-4">
-              Интерактивный симулятор для обучения позиционированию при рентген-исследованиях
+            <h3 className="text-3xl font-bold text-black mb-4">Укладки и позиционирование</h3>
+            <p className="text-xl text-gray-700 mb-6 leading-relaxed">
+              Справочник по правильному расположению пациента и рентген-аппарата для разных видов снимков.
             </p>
-            <div className="text-sm text-gray-500">
-              <span className="inline-block px-3 py-1 bg-green-100 text-green-800 rounded-full">
-                Доступно всем
-              </span>
+            <div className="inline-block px-5 py-3 bg-black text-white rounded-2xl text-lg font-semibold">
+              Открыть справочник →
+            </div>
+          </Link>
+
+          {/* CRM Card */}
+          <Link
+            to="/crm"
+            className="bg-gray-50 rounded-3xl shadow-sm p-12 hover:shadow-xl transition-all border-4 border-transparent hover:border-black group"
+          >
+            <div className="w-20 h-20 bg-black rounded-3xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+              <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+              </svg>
+            </div>
+            <h3 className="text-3xl font-bold text-black mb-4">Карточки пациентов</h3>
+            <p className="text-xl text-gray-700 mb-6 leading-relaxed">
+              Храните историю снимков и дозы каждого пациента. Все в одном месте, легко найти.
+            </p>
+            <div className="inline-block px-5 py-3 bg-white border-2 border-black text-black rounded-2xl text-lg font-semibold">
+              Скоро откроется
             </div>
           </Link>
         </div>
 
-        {/* About Section */}
-        <div className="mt-20 bg-white rounded-xl shadow-lg p-8 md:p-12">
-          <h2 className="text-3xl font-bold text-gray-900 mb-6">О проекте XrayHub</h2>
-          <div className="prose prose-lg max-w-none text-gray-600">
-            <p>
-              XrayHub — это комплексная платформа для специалистов рентгенологических служб медицинских учреждений.
-              Наша цель — упростить ведение документации, автоматизировать рутинные задачи и предоставить удобный
-              доступ к справочным материалам.
+        {/* Info Section */}
+        {!isAuthenticated && (
+          <div className="mt-20 text-center bg-gray-50 rounded-3xl p-12">
+            <h2 className="text-3xl font-bold text-black mb-4">Как начать работать?</h2>
+            <p className="text-xl text-gray-700 mb-8 max-w-3xl mx-auto leading-relaxed">
+              Некоторые разделы доступны сразу, для полного доступа войдите через VK ID в правом верхнем углу
             </p>
-            <div className="grid md:grid-cols-2 gap-6 mt-8">
-              <div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">Для кого</h3>
-                <ul className="list-disc list-inside space-y-1">
-                  <li>Медицинские физики</li>
-                  <li>Рентгенолаборанты</li>
-                  <li>Специалисты по радиационной безопасности</li>
-                  <li>Руководители рентгенологических отделений</li>
-                </ul>
-              </div>
-              <div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">Возможности</h3>
-                <ul className="list-disc list-inside space-y-1">
-                  <li>Автоматическое формирование отчетов</li>
-                  <li>Экспорт в Excel, DOC, PDF</li>
-                  <li>Облачное хранение данных</li>
-                  <li>Работа с любого устройства</li>
-                </ul>
-              </div>
-            </div>
           </div>
-        </div>
+        )}
       </main>
 
       {/* Footer */}
-      <footer className="bg-white border-t mt-20">
-        <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-          <div className="text-center text-gray-500 text-sm">
-            <p>© 2025 XrayHub. Платформа для специалистов рентгенологических служб.</p>
-            <p className="mt-2">
-              Данные инструменты являются вспомогательными. Ответственность за корректность данных несет пользователь.
-            </p>
-          </div>
+      <footer className="border-t-2 border-gray-200 mt-24 py-12">
+        <div className="max-w-6xl mx-auto px-6 sm:px-8 lg:px-12 text-center">
+          <p className="text-gray-600 text-lg">
+            © 2026 XrayHub — для рентгенлаборантов стоматологических кабинетов
+          </p>
         </div>
       </footer>
     </div>
