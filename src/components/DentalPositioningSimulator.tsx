@@ -116,25 +116,25 @@ export function DentalPositioningSimulator() {
           maxDistance={10}
         />
 
-        {/* Освещение */}
-        <ambientLight intensity={0.8} />
+        {/* Освещение - усиленное и ближе к объектам */}
+        <ambientLight intensity={1.2} />
         <directionalLight
-          position={[5, 5, 5]}
-          intensity={1.5}
+          position={[3, 4, 3]}
+          intensity={2.5}
           castShadow
           shadow-mapSize={[1024, 1024]}
         />
         <directionalLight
-          position={[-5, 5, -5]}
-          intensity={1}
+          position={[-3, 4, -3]}
+          intensity={2}
         />
-        <pointLight position={[-5, 5, 2]} intensity={0.8} />
-        <pointLight position={[5, -2, 5]} intensity={0.6} color="#ffffff" />
+        <pointLight position={[-2, 3, 2]} intensity={1.5} />
+        <pointLight position={[2, 2, 3]} intensity={1.2} color="#ffffff" />
         <spotLight
-          position={[0, 10, 0]}
-          angle={0.6}
-          penumbra={0.5}
-          intensity={1.2}
+          position={[0, 5, 0]}
+          angle={0.8}
+          penumbra={0.3}
+          intensity={2}
           castShadow
         />
 
