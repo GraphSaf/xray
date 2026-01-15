@@ -4,6 +4,7 @@ import { ProcedureTable } from '../components/report/ProcedureTable';
 import { ExportButtons } from '../components/report/ExportButtons';
 import { Button } from '../components/common';
 import { Navigation } from '../components/Navigation';
+import { Footer } from '../components/Footer';
 
 export function DOZ3Page() {
   const currentReport = useDOZ3Store((state) => state.currentReport);
@@ -56,15 +57,7 @@ export function DOZ3Page() {
         </div>
       </main>
 
-      <footer className="bg-white border-t mt-12">
-        <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
-          <p className="text-xs text-gray-500">
-            Данное приложение является вспомогательным инструментом для формирования отчетности.
-            Ответственность за корректность вводимых данных и соответствие нормативным требованиям несет пользователь.
-            Перед отправкой отчета в надзорные органы рекомендуется проверка данных медицинским физиком или ответственным за радиационную безопасность.
-          </p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

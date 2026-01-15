@@ -1,4 +1,5 @@
 import { Navigation } from '../components/Navigation';
+import { Footer } from '../components/Footer';
 import { DentalPositioningSimulator } from '../components/DentalPositioningSimulator';
 import { useState } from 'react';
 
@@ -234,6 +235,8 @@ export function PositioningPage() {
           </div>
         )}
       </main>
+
+      <Footer />
     </div>
   );
 }
