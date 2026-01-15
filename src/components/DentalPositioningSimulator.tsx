@@ -1,6 +1,7 @@
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls, PerspectiveCamera, Grid, Box, Cone, Cylinder, useGLTF } from '@react-three/drei';
-import { Suspense } from 'react';
+import { OrbitControls, PerspectiveCamera, Box, Cone, Cylinder, useGLTF } from '@react-three/drei';
+import { Suspense, useState, useRef } from 'react';
+import type { OrbitControls as OrbitControlsType } from 'three-stdlib';
 
 // URL модели зубов в S3 хранилище Beget
 const TEETH_MODEL_URL = 'https://s3.ru1.storage.beget.cloud/0f31e7f56d88-xrayhub/teeth.glb';
@@ -88,12 +89,26 @@ function FilmSensor({
 
 // Основной компонент симулятора
 export function DentalPositioningSimulator() {
+  const [backgroundColor, setBackgroundColor] = useState<'white' | 'dark'>('white');
+  const controlsRef = useRef<OrbitControlsType>(null);
+
+  const resetCamera = () => {
+    if (controlsRef.current) {
+      controlsRef.current.reset();
+    }
+  };
+
+  const bgColor = backgroundColor === 'white' ? '#ffffff' : '#374151';
+  const containerBg = backgroundColor === 'white' ? 'bg-white' : 'bg-gray-700';
+
   return (
-    <div className="w-full h-full relative bg-white rounded-lg overflow-hidden border-2 border-gray-200">
+    <div className={`w-full h-full relative ${containerBg} rounded-lg overflow-hidden border-2 border-gray-200`}>
       {/* 3D Canvas */}
       <Canvas shadows>
+        <color attach="background" args={[bgColor]} />
         <PerspectiveCamera makeDefault position={[3, 2, 3]} fov={60} />
         <OrbitControls
+          ref={controlsRef}
           enablePan={true}
           enableZoom={true}
           enableRotate={true}
@@ -123,20 +138,6 @@ export function DentalPositioningSimulator() {
           castShadow
         />
 
-        {/* Сетка пола */}
-        <Grid
-          args={[10, 10]}
-          cellSize={0.5}
-          cellThickness={0.5}
-          cellColor="#d1d5db"
-          sectionSize={2}
-          sectionThickness={1}
-          sectionColor="#9ca3af"
-          fadeDistance={20}
-          fadeStrength={1}
-          position={[0, -2, 0]}
-        />
-
         {/* Объекты сцены */}
         <Suspense fallback={<LoadingCube />}>
           <TeethModel />
@@ -144,6 +145,44 @@ export function DentalPositioningSimulator() {
         <XRayMachine position={[2.5, 0, 0]} />
         <FilmSensor position={[0, -0.2, 1.3]} />
       </Canvas>
+
+      {/* Панель управления */}
+      <div className="absolute top-4 right-4 flex flex-col gap-2">
+        {/* Кнопка сброса камеры */}
+        <button
+          onClick={resetCamera}
+          className="px-4 py-2 bg-black text-white font-semibold rounded-xl hover:bg-gray-800 transition-colors shadow-lg"
+          title="Вернуться в исходную позицию"
+        >
+          ↑ Сброс
+        </button>
+
+        {/* Кнопки смены фона */}
+        <div className="flex gap-2">
+          <button
+            onClick={() => setBackgroundColor('white')}
+            className={`px-3 py-2 font-semibold rounded-xl transition-colors shadow-lg ${
+              backgroundColor === 'white'
+                ? 'bg-white text-black border-2 border-black'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
+            title="Белый фон"
+          >
+            ⚪
+          </button>
+          <button
+            onClick={() => setBackgroundColor('dark')}
+            className={`px-3 py-2 font-semibold rounded-xl transition-colors shadow-lg ${
+              backgroundColor === 'dark'
+                ? 'bg-gray-700 text-white border-2 border-white'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
+            title="Темный фон"
+          >
+            ⚫
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
