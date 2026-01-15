@@ -28,16 +28,6 @@ export function Navigation() {
           {/* Navigation Links */}
           <nav className="hidden md:flex items-center space-x-2">
             <Link
-              to="/doz3"
-              className={`px-6 py-3 rounded-2xl font-semibold text-lg transition-all ${
-                isActive('/doz3')
-                  ? 'bg-black text-white'
-                  : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
-              }`}
-            >
-              Журнал ДОЗ-3
-            </Link>
-            <Link
               to="/positioning"
               className={`px-6 py-3 rounded-2xl font-semibold text-lg transition-all ${
                 isActive('/positioning')
@@ -48,6 +38,16 @@ export function Navigation() {
               Укладки
             </Link>
             <Link
+              to="/equipment"
+              className={`px-6 py-3 rounded-2xl font-semibold text-lg transition-all ${
+                isActive('/equipment')
+                  ? 'bg-black text-white'
+                  : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+              }`}
+            >
+              Оборудование
+            </Link>
+            <Link
               to="/crm"
               className={`px-6 py-3 rounded-2xl font-semibold text-lg transition-all ${
                 isActive('/crm')
@@ -56,6 +56,16 @@ export function Navigation() {
               }`}
             >
               Пациенты
+            </Link>
+            <Link
+              to="/doz3"
+              className={`px-6 py-3 rounded-2xl font-semibold text-lg transition-all ${
+                isActive('/doz3')
+                  ? 'bg-black text-white'
+                  : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+              }`}
+            >
+              Журнал ДОЗ-3
             </Link>
           </nav>
 
@@ -74,6 +84,12 @@ export function Navigation() {
                   className="block px-6 py-4 text-lg font-semibold text-gray-800 hover:bg-gray-100 first:rounded-t-2xl"
                 >
                   Укладки
+                </Link>
+                <Link
+                  to="/equipment"
+                  className="block px-6 py-4 text-lg font-semibold text-gray-800 hover:bg-gray-100"
+                >
+                  Оборудование
                 </Link>
                 <Link
                   to="/crm"

@@ -3,6 +3,7 @@ import { LandingPage } from './pages/LandingPage';
 import { DOZ3Page } from './pages/DOZ3Page';
 import { CRMPage } from './pages/CRMPage';
 import { PositioningPage } from './pages/PositioningPage';
+import { EquipmentGuidePage } from './pages/EquipmentGuidePage';
 
 function App() {
   return (
@@ -12,6 +13,7 @@ function App() {
         <Route path="/doz3" element={<DOZ3Page />} />
         <Route path="/crm" element={<CRMPage />} />
         <Route path="/positioning" element={<PositioningPage />} />
+        <Route path="/equipment" element={<EquipmentGuidePage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

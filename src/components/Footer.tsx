@@ -24,6 +24,11 @@ export function Footer() {
                 </Link>
               </li>
               <li>
+                <Link to="/equipment" className="text-sm sm:text-base text-gray-700 hover:text-black transition-colors">
+                  Справочник по оборудованию
+                </Link>
+              </li>
+              <li>
                 <Link to="/crm" className="text-sm sm:text-base text-gray-700 hover:text-black transition-colors">
                   Карточки пациентов
                 </Link>
