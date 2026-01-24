@@ -163,20 +163,14 @@ function UniversalModel({
 }
 
 
-// Компонент визуализации света (без тубуса)
+// Компонент визуализации света - только вектор направления
 function LightVisualization({
-  lightAngle,
   showAxes
 }: {
-  lightAngle: number;
   showAxes: boolean;
 }) {
   // Вектор направления света (стрелка)
-  const arrowLength = 2;
-
-  // Контур конуса освещения
-  const coneDistance = 2.5;
-  const coneRadius = Math.tan(lightAngle * Math.PI / 180) * coneDistance;
+  const arrowLength = 3;
 
   return (
     <group>
@@ -187,16 +181,10 @@ function LightVisualization({
           new THREE.Vector3(0, 0, 0), // начало в (0,0,0)
           arrowLength, // длина стрелки
           0xff0000, // красный цвет для видимости
-          0.2, // длина головки
-          0.15 // ширина головки
+          0.3, // длина головки
+          0.2 // ширина головки
         ]}
       />
-
-      {/* Контур конуса освещения (wireframe) */}
-      <mesh position={[0, 0, -coneDistance / 2]} rotation={[Math.PI, 0, 0]}>
-        <coneGeometry args={[coneRadius, coneDistance, 16, 1, true]} />
-        <meshBasicMaterial color="#00ff00" wireframe side={THREE.DoubleSide} />
-      </mesh>
 
       {/* Оси координат для отладки */}
       {showAxes && <AxesHelper size={0.5} position={[0, 0, 0]} />}
@@ -261,6 +249,9 @@ export function DentalPositioningSimulator() {
   const [lightRot, setLightRot] = useState<[number, number, number]>([0, 0, 0]);
   const [xrayLightIntensity, setXrayLightIntensity] = useState(220);
   const [xrayLightAngle, setXrayLightAngle] = useState(9);
+  const [lightDistance, setLightDistance] = useState(10);
+  const [lightPenumbra, setLightPenumbra] = useState(0.05);
+  const [lightDecay, setLightDecay] = useState(2);
 
   // Прозрачность челюстей
   const [teethOpacity, setTeethOpacity] = useState(0.5);
@@ -322,19 +313,19 @@ export function DentalPositioningSimulator() {
             <spotLight
               ref={xrayLightRef}
               angle={xrayLightAngle * Math.PI / 180}
-              penumbra={0.05}
+              penumbra={lightPenumbra}
               intensity={xrayLightIntensity}
               color="#E5FFE5"
-              distance={10}
-              decay={2}
+              distance={lightDistance}
+              decay={lightDecay}
               castShadow
               shadow-mapSize={[4096, 4096]}
               shadow-bias={-0.00001}
               shadow-camera-near={0.1}
-              shadow-camera-far={10}
+              shadow-camera-far={20}
             />
-            {/* Визуализация света */}
-            <LightVisualization lightAngle={xrayLightAngle} showAxes={showAxes} />
+            {/* Визуализация света - только вектор */}
+            <LightVisualization showAxes={showAxes} />
           </group>
 
           {/* Объекты сцены */}
@@ -409,8 +400,8 @@ export function DentalPositioningSimulator() {
                   label="Гортань"
                 />
 
-                {/* Язык */}
-                <UniversalModel
+                {/* Язык - временно отключен, модель битая (132B) */}
+                {/* <UniversalModel
                   modelUrl={MODEL_URLS.tongue}
                   pivotPosition={tonguePivotPos}
                   pivotRotation={tonguePivotRot}
@@ -420,7 +411,7 @@ export function DentalPositioningSimulator() {
                   isSelected={selectedObject === 'tongue'}
                   onClick={() => setSelectedObject('tongue')}
                   label="Язык"
-                />
+                /> */}
               </>
             )}
 
@@ -633,7 +624,8 @@ export function DentalPositioningSimulator() {
             >
               Гортань
             </button>
-            <button
+            {/* Язык временно отключен - модель битая */}
+            {/* <button
               onClick={() => setSelectedObject('tongue')}
               className={`py-2 px-2 rounded-xl text-xs font-semibold ${
                 selectedObject === 'tongue'
@@ -642,7 +634,7 @@ export function DentalPositioningSimulator() {
               }`}
             >
               Язык
-            </button>
+            </button> */}
             <button
               onClick={() => setSelectedObject('sensor')}
               className={`py-2 px-2 rounded-xl text-xs font-semibold ${
@@ -962,28 +954,77 @@ export function DentalPositioningSimulator() {
 
             <div className="mb-3">
               <label className="text-xs font-semibold mb-1 block">
-                Интенсивность
-                <input
-                  type="number"
-                  step="10"
-                  value={xrayLightIntensity}
-                  onChange={(e) => setXrayLightIntensity(parseFloat(e.target.value) || 0)}
-                  className="w-full px-2 py-1 border rounded mt-1"
-                />
+                Интенсивность: {xrayLightIntensity}
               </label>
+              <input
+                type="range"
+                min="0"
+                max="500"
+                step="10"
+                value={xrayLightIntensity}
+                onChange={(e) => setXrayLightIntensity(parseFloat(e.target.value))}
+                className="w-full"
+              />
             </div>
 
             <div className="mb-3">
               <label className="text-xs font-semibold mb-1 block">
-                Угол (градусы)
-                <input
-                  type="number"
-                  step="1"
-                  value={xrayLightAngle}
-                  onChange={(e) => setXrayLightAngle(parseFloat(e.target.value) || 0)}
-                  className="w-full px-2 py-1 border rounded mt-1"
-                />
+                Угол: {xrayLightAngle}°
               </label>
+              <input
+                type="range"
+                min="1"
+                max="45"
+                step="1"
+                value={xrayLightAngle}
+                onChange={(e) => setXrayLightAngle(parseFloat(e.target.value))}
+                className="w-full"
+              />
+            </div>
+
+            <div className="mb-3">
+              <label className="text-xs font-semibold mb-1 block">
+                Дистанция: {lightDistance.toFixed(1)}
+              </label>
+              <input
+                type="range"
+                min="1"
+                max="20"
+                step="0.5"
+                value={lightDistance}
+                onChange={(e) => setLightDistance(parseFloat(e.target.value))}
+                className="w-full"
+              />
+            </div>
+
+            <div className="mb-3">
+              <label className="text-xs font-semibold mb-1 block">
+                Penumbra (мягкость): {lightPenumbra.toFixed(2)}
+              </label>
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.05"
+                value={lightPenumbra}
+                onChange={(e) => setLightPenumbra(parseFloat(e.target.value))}
+                className="w-full"
+              />
+            </div>
+
+            <div className="mb-3">
+              <label className="text-xs font-semibold mb-1 block">
+                Decay (затухание): {lightDecay.toFixed(1)}
+              </label>
+              <input
+                type="range"
+                min="0"
+                max="3"
+                step="0.1"
+                value={lightDecay}
+                onChange={(e) => setLightDecay(parseFloat(e.target.value))}
+                className="w-full"
+              />
             </div>
           </div>
         )}
