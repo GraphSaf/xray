@@ -89,8 +89,9 @@ function UniversalModel({
   onClick: () => void;
   label: string;
 }) {
-  const { scene } = useGLTF(modelUrl);
-  const clonedScene = scene.clone(true);
+  try {
+    const { scene } = useGLTF(modelUrl);
+    const clonedScene = scene.clone(true);
 
   // Настройка теней и прозрачности
   React.useEffect(() => {
@@ -110,26 +111,55 @@ function UniversalModel({
     });
   }, [clonedScene, opacity]);
 
-  return (
-    <group onClick={onClick}>
-      {/* Pivot (оси вращения) */}
-      <group position={pivotPosition} rotation={pivotRotation}>
-        {/* Object (сам объект) */}
-        <group position={objectPosition} rotation={objectRotation}>
-          <primitive object={clonedScene} />
+    return (
+      <group onClick={onClick}>
+        {/* Pivot (оси вращения) */}
+        <group position={pivotPosition} rotation={pivotRotation}>
+          {/* Object (сам объект) */}
+          <group position={objectPosition} rotation={objectRotation}>
+            <primitive object={clonedScene} />
+          </group>
+          {/* Оси в центре pivot */}
+          {showAxes && <AxesHelper size={0.5} position={[0, 0, 0]} />}
         </group>
-        {/* Оси в центре pivot */}
-        {showAxes && <AxesHelper size={0.5} position={[0, 0, 0]} />}
+        {isSelected && (
+          <Html position={[pivotPosition[0], pivotPosition[1] + 1.5, pivotPosition[2]]} center>
+            <div className="bg-green-500 text-white px-2 py-1 rounded text-xs font-bold">
+              {label}
+            </div>
+          </Html>
+        )}
       </group>
-      {isSelected && (
-        <Html position={[pivotPosition[0], pivotPosition[1] + 1.5, pivotPosition[2]]} center>
-          <div className="bg-green-500 text-white px-2 py-1 rounded text-xs font-bold">
-            {label}
-          </div>
-        </Html>
-      )}
-    </group>
-  );
+    );
+  } catch (error) {
+    console.error(`Error loading model ${modelUrl}:`, error);
+    // Fallback: показываем wireframe куб
+    return (
+      <group onClick={onClick}>
+        <group position={pivotPosition} rotation={pivotRotation}>
+          <group position={objectPosition} rotation={objectRotation}>
+            <mesh castShadow receiveShadow>
+              <boxGeometry args={[0.3, 0.3, 0.3]} />
+              <meshStandardMaterial
+                color="#ff0000"
+                wireframe
+                transparent={opacity < 1}
+                opacity={opacity}
+              />
+            </mesh>
+          </group>
+          {showAxes && <AxesHelper size={0.5} position={[0, 0, 0]} />}
+        </group>
+        {isSelected && (
+          <Html position={[pivotPosition[0], pivotPosition[1] + 0.5, pivotPosition[2]]} center>
+            <div className="bg-red-500 text-white px-2 py-1 rounded text-xs font-bold">
+              {label} (ERROR)
+            </div>
+          </Html>
+        )}
+      </group>
+    );
+  }
 }
 
 
@@ -455,6 +485,15 @@ export function DentalPositioningSimulator() {
               {showAxes ? 'Скрыть оси' : 'Показать оси'}
             </button>
           </div>
+        </div>
+
+        {/* Информация о моделях */}
+        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-xl">
+          <p className="text-xs text-blue-800">
+            <strong>Модели загружаются с S3:</strong><br/>
+            {S3_BASE_URL}<br/>
+            Если видны красные кубики - проверьте CORS и доступ к S3.
+          </p>
         </div>
 
         {/* Глобальные настройки */}
