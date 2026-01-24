@@ -13,7 +13,6 @@ const MODEL_URLS = {
   teethUpper: `${S3_BASE_URL}/teeth_upper.glb`,
   teethLower: `${S3_BASE_URL}/teeth_lower.glb`,
   xraySensor: `${S3_BASE_URL}/xray_sensor.glb`,
-  xrayTubus: `${S3_BASE_URL}/xray_tubus.glb`,
   placeholder: '/models/placeholder.glb', // Локально
 };
 
@@ -159,18 +158,16 @@ function TeethLowerModel({
   );
 }
 
-// Компонент датчика (с кастомным центром ротации, только Z)
+// Компонент датчика (полное управление, центр внутри датчика)
 function XRaySensorModel({
   position,
-  rotationZ,
-  pivot,
+  rotation,
   showAxes,
   isSelected,
   onClick
 }: {
   position: [number, number, number];
-  rotationZ: number;
-  pivot: [number, number, number];
+  rotation: [number, number, number];
   showAxes: boolean;
   isSelected: boolean;
   onClick: () => void;
@@ -189,15 +186,8 @@ function XRaySensorModel({
   }, [clonedScene]);
 
   return (
-    <group onClick={onClick} position={position}>
-      {/* Pivot point для смещения центра ротации */}
-      <group position={pivot}>
-        <group rotation={[0, 0, rotationZ]}>
-          <group position={[-pivot[0], -pivot[1], -pivot[2]]}>
-            <primitive object={clonedScene} />
-          </group>
-        </group>
-      </group>
+    <group onClick={onClick} position={position} rotation={rotation}>
+      <primitive object={clonedScene} />
       {showAxes && <AxesHelper size={0.3} position={[0, 0, 0]} />}
       {isSelected && (
         <Html position={[0, 1.5, 0]} center>
@@ -210,22 +200,59 @@ function XRaySensorModel({
   );
 }
 
-// Компонент тубуса (фиксированный, связан со светом)
-function XRayTubusModel({
-  position,
-  rotation,
+// Компонент процедурного тубуса вокруг света
+function ProceduralTubus({
+  lightAngle,
   showAxes
 }: {
-  position: [number, number, number];
-  rotation: [number, number, number];
+  lightAngle: number;
   showAxes: boolean;
 }) {
-  const { scene } = useGLTF(MODEL_URLS.xrayTubus);
+  // Размеры тубуса
+  const outerRadius = 0.15;
+  const innerRadius = 0.12;
+  const length = 0.8;
+
+  // Вектор направления (стрелка вниз по -Z)
+  const arrowLength = 1.5;
+
+  // Контур конуса освещения
+  const coneDistance = 2;
+  const coneRadius = Math.tan(lightAngle * Math.PI / 180) * coneDistance;
 
   return (
-    <group position={position} rotation={rotation}>
-      <primitive object={scene.clone(true)} />
-      {showAxes && <AxesHelper size={0.5} position={[0, 0, 0]} />}
+    <group>
+      {/* Внешний цилиндр */}
+      <mesh position={[0, 0, -length / 2]}>
+        <cylinderGeometry args={[outerRadius, outerRadius, length, 16]} />
+        <meshStandardMaterial color="#4a5568" metalness={0.6} roughness={0.3} />
+      </mesh>
+
+      {/* Внутренний цилиндр (вырез) */}
+      <mesh position={[0, 0, -length / 2]}>
+        <cylinderGeometry args={[innerRadius, innerRadius, length + 0.01, 16]} />
+        <meshStandardMaterial color="#000000" transparent opacity={0.5} />
+      </mesh>
+
+      {/* Вектор направления (стрелка) */}
+      <arrowHelper
+        args={[
+          new THREE.Vector3(0, 0, -1), // направление
+          new THREE.Vector3(0, 0, 0), // начало
+          arrowLength, // длина
+          0x888888, // цвет
+          0.2, // длина головки
+          0.1 // ширина головки
+        ]}
+      />
+
+      {/* Контур конуса освещения (wireframe) */}
+      <mesh position={[0, 0, -coneDistance]}>
+        <coneGeometry args={[coneRadius, coneDistance, 16]} />
+        <meshBasicMaterial color="#888888" wireframe opacity={0.3} transparent />
+      </mesh>
+
+      {showAxes && <AxesHelper size={0.3} position={[0, 0, 0]} />}
     </group>
   );
 }
@@ -248,15 +275,12 @@ export function DentalPositioningSimulator() {
   const teethLowerPos: [number, number, number] = [0, 0, 0];
   const teethLowerPivot: [number, number, number] = [0, 0, -1.2]; // Смещение центра ротации
 
-  // Сенсор - только ротация по Z, центр смещен
-  const [sensorRotZ, setSensorRotZ] = useState(0);
-  const sensorPos: [number, number, number] = [0, 1.4, 0.1];
-  const sensorPivot: [number, number, number] = [0, -0.4, 1]; // Смещение центра
+  // Сенсор - полное управление по всем осям
+  const [sensorPos, setSensorPos] = useState<[number, number, number]>([0, 1.4, 0.1]);
+  const [sensorRot, setSensorRot] = useState<[number, number, number]>([0, 0, 0]);
 
-  // Тубус + Свет - связаны вместе
-  const [tubusDistance, setTubusDistance] = useState(1.3); // Расстояние от сенсора
-  const tubusPos: [number, number, number] = [0, 1, 1.3];
-  const tubusRot: [number, number, number] = [0, 0, 0];
+  // Расстояние между светом и датчиком
+  const [lightSensorDistance, setLightSensorDistance] = useState(1.3);
 
   // Настройки рентген-света (связан с тубусом)
   const [lightPos, setLightPos] = useState<[number, number, number]>([0, -61, 6.8]);
@@ -284,8 +308,8 @@ export function DentalPositioningSimulator() {
     }
   };
 
-  const bgColor = backgroundColor === 'white' ? '#000000' : '#374151';
-  const containerBg = backgroundColor === 'white' ? 'bg-black' : 'bg-gray-700';
+  const bgColor = backgroundColor === 'white' ? '#ffffff' : '#374151';
+  const containerBg = backgroundColor === 'white' ? 'bg-white' : 'bg-gray-700';
 
   return (
     <div className="flex flex-col lg:flex-row gap-4 h-full">
@@ -315,7 +339,7 @@ export function DentalPositioningSimulator() {
             intensity={1}
           />
 
-          {/* РЕНТГЕН-СВЕТ: Узконаправленный источник света */}
+          {/* РЕНТГЕН-СВЕТ с процедурным тубусом */}
           <group position={lightPos} rotation={[lightRotX, 0, 0]}>
             <spotLight
               ref={xrayLightRef}
@@ -331,7 +355,8 @@ export function DentalPositioningSimulator() {
               shadow-camera-near={0.1}
               shadow-camera-far={10}
             />
-            {showAxes && <AxesHelper size={0.3} position={[0, 0, 0]} />}
+            {/* Процедурный тубус вокруг света */}
+            <ProceduralTubus lightAngle={xrayLightAngle} showAxes={showAxes} />
           </group>
 
           {/* Объекты сцены */}
@@ -353,68 +378,64 @@ export function DentalPositioningSimulator() {
               isSelected={selectedObject === 'teeth_lower'}
               onClick={() => setSelectedObject('teeth_lower')}
             />
-            {/* Датчик - только ротация Z с кастомным центром */}
+            {/* Датчик - полное управление */}
             <XRaySensorModel
               position={sensorPos}
-              rotationZ={sensorRotZ}
-              pivot={sensorPivot}
+              rotation={sensorRot}
               showAxes={showAxes}
               isSelected={selectedObject === 'sensor'}
               onClick={() => setSelectedObject('sensor')}
             />
-            {/* Тубус - фиксированный, связан со светом */}
-            <XRayTubusModel
-              position={tubusPos}
-              rotation={tubusRot}
-              showAxes={showAxes}
-            />
           </Suspense>
         </Canvas>
-
-        {/* Управление камерой и фоном */}
-        <div className="absolute top-4 right-4 flex flex-col gap-2">
-          <button
-            onClick={resetCamera}
-            className="px-4 py-2 bg-black text-white font-semibold rounded-xl hover:bg-gray-800 transition-colors shadow-lg"
-          >
-            ↑ Сброс
-          </button>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setBackgroundColor('white')}
-              className={`px-3 py-2 rounded-xl ${
-                backgroundColor === 'white'
-                  ? 'bg-white text-black border-2 border-black'
-                  : 'bg-gray-200 text-gray-700'
-              }`}
-            >
-              ⚪
-            </button>
-            <button
-              onClick={() => setBackgroundColor('dark')}
-              className={`px-3 py-2 rounded-xl ${
-                backgroundColor === 'dark'
-                  ? 'bg-gray-700 text-white border-2 border-white'
-                  : 'bg-gray-200 text-gray-700'
-              }`}
-            >
-              ⚫
-            </button>
-          </div>
-          <button
-            onClick={() => setShowAxes(!showAxes)}
-            className={`px-3 py-2 rounded-xl ${
-              showAxes ? 'bg-black text-white' : 'bg-gray-200 text-gray-700'
-            }`}
-          >
-            📐
-          </button>
-        </div>
       </div>
 
       {/* Панель настроек справа */}
       <div className="w-full lg:w-80 bg-white rounded-2xl border-2 border-gray-200 p-4 overflow-y-auto">
-        <h3 className="font-bold text-xl mb-4">Настройки объектов</h3>
+        <h3 className="font-bold text-xl mb-4">Настройки</h3>
+
+        {/* Управление камерой и отображением */}
+        <div className="mb-4 p-3 bg-gray-50 rounded-xl">
+          <h4 className="text-sm font-semibold mb-2">Вид</h4>
+          <div className="flex flex-col gap-2">
+            <button
+              onClick={resetCamera}
+              className="px-4 py-2 bg-black text-white font-semibold rounded-xl hover:bg-gray-800 transition-colors"
+            >
+              Сбросить камеру
+            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setBackgroundColor('white')}
+                className={`flex-1 px-3 py-2 rounded-xl ${
+                  backgroundColor === 'white'
+                    ? 'bg-black text-white'
+                    : 'bg-gray-200 text-gray-700'
+                }`}
+              >
+                Белый фон
+              </button>
+              <button
+                onClick={() => setBackgroundColor('dark')}
+                className={`flex-1 px-3 py-2 rounded-xl ${
+                  backgroundColor === 'dark'
+                    ? 'bg-black text-white'
+                    : 'bg-gray-200 text-gray-700'
+                }`}
+              >
+                Темный фон
+              </button>
+            </div>
+            <button
+              onClick={() => setShowAxes(!showAxes)}
+              className={`px-3 py-2 rounded-xl ${
+                showAxes ? 'bg-black text-white' : 'bg-gray-200 text-gray-700'
+              }`}
+            >
+              {showAxes ? 'Скрыть оси' : 'Показать оси'}
+            </button>
+          </div>
+        </div>
 
         {/* Галочка для связки всех элементов */}
         <div className="mb-4 p-3 bg-gray-50 rounded-xl">
@@ -498,20 +519,51 @@ export function DentalPositioningSimulator() {
             <h4 className="font-bold mb-3">Датчик</h4>
 
             <div className="mb-3">
-              <label className="text-xs font-semibold mb-1 block">
-                Rotation Z (радианы)
-                <input
-                  type="number"
-                  step="0.1"
-                  value={sensorRotZ.toFixed(2)}
-                  onChange={(e) => setSensorRotZ(parseFloat(e.target.value) || 0)}
-                  className="w-full px-2 py-1 border rounded mt-1"
-                />
-              </label>
+              <label className="text-xs font-semibold mb-1 block">Position</label>
+              <div className="grid grid-cols-3 gap-2">
+                {['X', 'Y', 'Z'].map((axis, i) => (
+                  <label key={axis} className="text-xs">
+                    {axis}:
+                    <input
+                      type="number"
+                      step="0.1"
+                      value={sensorPos[i]}
+                      onChange={(e) => {
+                        const newPos = [...sensorPos] as [number, number, number];
+                        newPos[i] = parseFloat(e.target.value) || 0;
+                        setSensorPos(newPos);
+                      }}
+                      className="w-full px-2 py-1 border rounded mt-1"
+                    />
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div className="mb-3">
+              <label className="text-xs font-semibold mb-1 block">Rotation (радианы)</label>
+              <div className="grid grid-cols-3 gap-2">
+                {['X', 'Y', 'Z'].map((axis, i) => (
+                  <label key={axis} className="text-xs">
+                    {axis}:
+                    <input
+                      type="number"
+                      step="0.1"
+                      value={sensorRot[i].toFixed(2)}
+                      onChange={(e) => {
+                        const newRot = [...sensorRot] as [number, number, number];
+                        newRot[i] = parseFloat(e.target.value) || 0;
+                        setSensorRot(newRot);
+                      }}
+                      className="w-full px-2 py-1 border rounded mt-1"
+                    />
+                  </label>
+                ))}
+              </div>
             </div>
 
             <p className="text-xs text-gray-600">
-              Центр ротации смещен к датчику (Y -0.4, Z 1)
+              Центр вращения внутри датчика
             </p>
           </div>
         )}
@@ -561,8 +613,8 @@ export function DentalPositioningSimulator() {
                 <input
                   type="number"
                   step="0.1"
-                  value={tubusDistance}
-                  onChange={(e) => setTubusDistance(parseFloat(e.target.value) || 0)}
+                  value={lightSensorDistance}
+                  onChange={(e) => setLightSensorDistance(parseFloat(e.target.value) || 0)}
                   className="w-full px-2 py-1 border rounded mt-1"
                 />
               </label>
