@@ -17,11 +17,35 @@ const MODEL_URLS = {
   placeholder: '/models/placeholder.glb', // Локально
 };
 
-// Компонент загрузки (placeholder)
+// Компонент загрузки (placeholder) - вращающийся
 function LoadingPlaceholder() {
-  // Временно используем простой куб, пока не загрузим placeholder.glb
-  // TODO: Заменить на useGLTF(MODEL_URLS.placeholder) когда файл будет доступен
-  return null; // Или можно использовать <Box> если нужен визуальный индикатор
+  const meshRef = useRef<THREE.Mesh>(null);
+
+  // Анимация вращения
+  React.useEffect(() => {
+    let animationFrameId: number;
+    const animate = () => {
+      if (meshRef.current) {
+        meshRef.current.rotation.y += 0.02;
+        meshRef.current.rotation.x += 0.01;
+      }
+      animationFrameId = requestAnimationFrame(animate);
+    };
+    animate();
+    return () => cancelAnimationFrame(animationFrameId);
+  }, []);
+
+  return (
+    <mesh ref={meshRef} position={[0, 0, 0]}>
+      <boxGeometry args={[0.5, 0.5, 0.5]} />
+      <meshStandardMaterial
+        color="#48BB78"
+        emissive="#48BB78"
+        emissiveIntensity={0.5}
+        wireframe
+      />
+    </mesh>
+  );
 }
 
 // Компонент для отображения осей координат
@@ -69,11 +93,22 @@ function TeethUpperModel({
   showAxes: boolean;
 }) {
   const { scene } = useGLTF(MODEL_URLS.teethUpper);
+  const clonedScene = scene.clone(true);
+
+  // Включаем отбрасывание теней для всех мешей
+  React.useEffect(() => {
+    clonedScene.traverse((child) => {
+      if ((child as THREE.Mesh).isMesh) {
+        child.castShadow = true;
+        child.receiveShadow = true;
+      }
+    });
+  }, [clonedScene]);
 
   return (
     <group>
       <primitive
-        object={scene.clone(true)}
+        object={clonedScene}
         position={position}
         rotation={[0, rotation, 0]}
       />
@@ -94,11 +129,22 @@ function TeethLowerModel({
   showAxes: boolean;
 }) {
   const { scene } = useGLTF(MODEL_URLS.teethLower);
+  const clonedScene = scene.clone(true);
+
+  // Включаем отбрасывание теней для всех мешей
+  React.useEffect(() => {
+    clonedScene.traverse((child) => {
+      if ((child as THREE.Mesh).isMesh) {
+        child.castShadow = true;
+        child.receiveShadow = true;
+      }
+    });
+  }, [clonedScene]);
 
   return (
     <group>
       <primitive
-        object={scene.clone(true)}
+        object={clonedScene}
         position={position}
         rotation={[0, rotation, 0]}
       />
@@ -119,11 +165,22 @@ function XRaySensorModel({
   showAxes: boolean;
 }) {
   const { scene } = useGLTF(MODEL_URLS.xraySensor);
+  const clonedScene = scene.clone(true);
+
+  // Датчик должен принимать тени
+  React.useEffect(() => {
+    clonedScene.traverse((child) => {
+      if ((child as THREE.Mesh).isMesh) {
+        child.receiveShadow = true;
+        child.castShadow = false; // датчик не отбрасывает тени
+      }
+    });
+  }, [clonedScene]);
 
   return (
     <group>
       <primitive
-        object={scene.clone(true)}
+        object={clonedScene}
         position={position}
         rotation={[0, rotation, 0]}
       />
@@ -168,7 +225,20 @@ export function DentalPositioningSimulator() {
   const [sensorPos, setSensorPos] = useState<[number, number, number]>([0, 0, 0.5]);
   const [tubusPos, setTubusPos] = useState<[number, number, number]>([2.5, 0, 0]);
 
+  // Настройки рентген-света
+  const [xrayLightIntensity, setXrayLightIntensity] = useState(100);
+  const [xrayLightAngle, setXrayLightAngle] = useState(15); // градусы
+
   const controlsRef = useRef<OrbitControlsType>(null);
+  const xrayLightRef = useRef<THREE.SpotLight>(null);
+
+  // Обновляем направление SpotLight на сенсор
+  React.useEffect(() => {
+    if (xrayLightRef.current) {
+      xrayLightRef.current.target.position.set(...sensorPos);
+      xrayLightRef.current.target.updateMatrixWorld();
+    }
+  }, [sensorPos, tubusPos]);
 
   const resetCamera = () => {
     if (controlsRef.current) {
@@ -221,25 +291,30 @@ export function DentalPositioningSimulator() {
         />
 
         {/* Освещение - усиленное и ближе к объектам */}
-        <ambientLight intensity={1.2} />
+        <ambientLight intensity={0.5} />
         <directionalLight
           position={[3, 4, 3]}
-          intensity={2.5}
-          castShadow
-          shadow-mapSize={[1024, 1024]}
+          intensity={1.5}
+          castShadow={false}
         />
         <directionalLight
           position={[-3, 4, -3]}
-          intensity={2}
+          intensity={1}
         />
-        <pointLight position={[-2, 3, 2]} intensity={1.5} />
-        <pointLight position={[2, 2, 3]} intensity={1.2} color="#ffffff" />
+
+        {/* РЕНТГЕН-СВЕТ: Узконаправленный из тубуса на сенсор */}
         <spotLight
-          position={[0, 5, 0]}
-          angle={0.8}
-          penumbra={0.3}
-          intensity={2}
+          ref={xrayLightRef}
+          position={tubusPos}
+          angle={xrayLightAngle * Math.PI / 180}
+          penumbra={0.05}
+          intensity={xrayLightIntensity}
+          color="#E5FFE5"
+          distance={10}
+          decay={2}
           castShadow
+          shadow-mapSize={[2048, 2048]}
+          shadow-bias={-0.0001}
         />
 
         {/* Объекты сцены */}
@@ -433,7 +508,7 @@ export function DentalPositioningSimulator() {
           </div>
 
           {/* Тубус */}
-          <div className="mb-4">
+          <div className="mb-4 pb-4 border-b border-gray-200">
             <h4 className="font-semibold mb-2">📸 Тубус (Tubus)</h4>
             <div className="grid grid-cols-3 gap-2">
               <label className="text-sm">
@@ -467,6 +542,36 @@ export function DentalPositioningSimulator() {
                 />
               </label>
             </div>
+          </div>
+
+          {/* Рентген-свет */}
+          <div className="mb-4">
+            <h4 className="font-semibold mb-2">💡 Рентген-свет (X-Ray Light)</h4>
+            <div className="grid grid-cols-2 gap-2">
+              <label className="text-sm">
+                Интенсивность:
+                <input
+                  type="number"
+                  step="10"
+                  value={xrayLightIntensity}
+                  onChange={(e) => setXrayLightIntensity(parseFloat(e.target.value))}
+                  className="w-full px-2 py-1 border rounded text-xs"
+                />
+              </label>
+              <label className="text-sm">
+                Угол (°):
+                <input
+                  type="number"
+                  step="1"
+                  value={xrayLightAngle}
+                  onChange={(e) => setXrayLightAngle(parseFloat(e.target.value))}
+                  className="w-full px-2 py-1 border rounded text-xs"
+                />
+              </label>
+            </div>
+            <p className="text-xs text-gray-600 mt-2">
+              Свет идет из позиции тубуса → на сенсор
+            </p>
           </div>
         </div>
       )}
