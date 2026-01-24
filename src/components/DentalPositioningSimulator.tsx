@@ -96,12 +96,13 @@ function UniversalModel({
   React.useEffect(() => {
     clonedScene.traverse((child) => {
       if ((child as THREE.Mesh).isMesh) {
-        child.castShadow = true;
-        child.receiveShadow = true;
+        const mesh = child as THREE.Mesh;
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
 
         // Добавляем прозрачность если нужно
-        if (opacity < 1 && child.material) {
-          const material = child.material as THREE.MeshStandardMaterial;
+        if (opacity < 1 && mesh.material) {
+          const material = mesh.material as THREE.MeshStandardMaterial;
           material.transparent = true;
           material.opacity = opacity;
         }
@@ -234,6 +235,9 @@ export function DentalPositioningSimulator() {
   // Прозрачность челюстей
   const [teethOpacity, setTeethOpacity] = useState(0.5);
 
+  // Видимость мягких тканей и гортани
+  const [showSoftTissues, setShowSoftTissues] = useState(true);
+
   const controlsRef = useRef<OrbitControlsType>(null);
   const xrayLightRef = useRef<THREE.SpotLight>(null);
 
@@ -256,9 +260,9 @@ export function DentalPositioningSimulator() {
   const containerBg = backgroundColor === 'white' ? 'bg-white' : 'bg-gray-700';
 
   return (
-    <div className="flex flex-col lg:flex-row gap-4 h-full">
+    <div className="flex flex-col gap-4 h-full">
       {/* 3D Canvas */}
-      <div className={`flex-1 relative ${containerBg} rounded-lg overflow-hidden border-2 border-gray-200`}>
+      <div className={`h-[400px] lg:h-[600px] relative ${containerBg} rounded-lg overflow-hidden border-2 border-gray-200`}>
         <Canvas shadows>
           <color attach="background" args={[bgColor]} />
           <PerspectiveCamera makeDefault position={[3, 2, 3]} fov={60} />
@@ -333,57 +337,62 @@ export function DentalPositioningSimulator() {
               label="Нижние зубы"
             />
 
-            {/* Верхние мягкие ткани */}
-            <UniversalModel
-              modelUrl={MODEL_URLS.gumsUpper}
-              pivotPosition={gumsUpperPivotPos}
-              pivotRotation={gumsUpperPivotRot}
-              objectPosition={gumsUpperObjPos}
-              objectRotation={gumsUpperObjRot}
-              showAxes={showAxes}
-              isSelected={selectedObject === 'gums_upper'}
-              onClick={() => setSelectedObject('gums_upper')}
-              label="Дёсны верхние"
-            />
+            {/* Мягкие ткани и гортань (опционально) */}
+            {showSoftTissues && (
+              <>
+                {/* Верхние мягкие ткани */}
+                <UniversalModel
+                  modelUrl={MODEL_URLS.gumsUpper}
+                  pivotPosition={gumsUpperPivotPos}
+                  pivotRotation={gumsUpperPivotRot}
+                  objectPosition={gumsUpperObjPos}
+                  objectRotation={gumsUpperObjRot}
+                  showAxes={showAxes}
+                  isSelected={selectedObject === 'gums_upper'}
+                  onClick={() => setSelectedObject('gums_upper')}
+                  label="Дёсны верхние"
+                />
 
-            {/* Нижние мягкие ткани */}
-            <UniversalModel
-              modelUrl={MODEL_URLS.gumsLower}
-              pivotPosition={gumsLowerPivotPos}
-              pivotRotation={gumsLowerPivotRot}
-              objectPosition={gumsLowerObjPos}
-              objectRotation={gumsLowerObjRot}
-              showAxes={showAxes}
-              isSelected={selectedObject === 'gums_lower'}
-              onClick={() => setSelectedObject('gums_lower')}
-              label="Дёсны нижние"
-            />
+                {/* Нижние мягкие ткани */}
+                <UniversalModel
+                  modelUrl={MODEL_URLS.gumsLower}
+                  pivotPosition={gumsLowerPivotPos}
+                  pivotRotation={gumsLowerPivotRot}
+                  objectPosition={gumsLowerObjPos}
+                  objectRotation={gumsLowerObjRot}
+                  showAxes={showAxes}
+                  isSelected={selectedObject === 'gums_lower'}
+                  onClick={() => setSelectedObject('gums_lower')}
+                  label="Дёсны нижние"
+                />
 
-            {/* Гортань */}
-            <UniversalModel
-              modelUrl={MODEL_URLS.throat}
-              pivotPosition={throatPivotPos}
-              pivotRotation={throatPivotRot}
-              objectPosition={throatObjPos}
-              objectRotation={throatObjRot}
-              showAxes={showAxes}
-              isSelected={selectedObject === 'throat'}
-              onClick={() => setSelectedObject('throat')}
-              label="Гортань"
-            />
+                {/* Гортань */}
+                <UniversalModel
+                  modelUrl={MODEL_URLS.throat}
+                  pivotPosition={throatPivotPos}
+                  pivotRotation={throatPivotRot}
+                  objectPosition={throatObjPos}
+                  objectRotation={throatObjRot}
+                  showAxes={showAxes}
+                  isSelected={selectedObject === 'throat'}
+                  onClick={() => setSelectedObject('throat')}
+                  label="Гортань"
+                />
 
-            {/* Язык */}
-            <UniversalModel
-              modelUrl={MODEL_URLS.tongue}
-              pivotPosition={tonguePivotPos}
-              pivotRotation={tonguePivotRot}
-              objectPosition={tongueObjPos}
-              objectRotation={tongueObjRot}
-              showAxes={showAxes}
-              isSelected={selectedObject === 'tongue'}
-              onClick={() => setSelectedObject('tongue')}
-              label="Язык"
-            />
+                {/* Язык */}
+                <UniversalModel
+                  modelUrl={MODEL_URLS.tongue}
+                  pivotPosition={tonguePivotPos}
+                  pivotRotation={tonguePivotRot}
+                  objectPosition={tongueObjPos}
+                  objectRotation={tongueObjRot}
+                  showAxes={showAxes}
+                  isSelected={selectedObject === 'tongue'}
+                  onClick={() => setSelectedObject('tongue')}
+                  label="Язык"
+                />
+              </>
+            )}
 
             {/* Датчик */}
             <UniversalModel
@@ -448,20 +457,87 @@ export function DentalPositioningSimulator() {
           </div>
         </div>
 
-        {/* Галочка для связки всех элементов */}
-        <div className="mb-4 p-3 bg-gray-50 rounded-xl">
+        {/* Глобальные настройки */}
+        <div className="mb-4 p-3 bg-gray-50 rounded-xl space-y-3">
+          <h4 className="text-sm font-semibold">Глобальные настройки</h4>
+
+          {/* Прозрачность челюстей */}
+          <div>
+            <label className="text-xs font-semibold mb-1 block">
+              Прозрачность челюстей: {(teethOpacity * 100).toFixed(0)}%
+            </label>
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.05"
+              value={teethOpacity}
+              onChange={(e) => setTeethOpacity(parseFloat(e.target.value))}
+              className="w-full"
+            />
+          </div>
+
+          {/* Показать мягкие ткани */}
           <label className="flex items-center gap-2 cursor-pointer">
             <input
               type="checkbox"
-              checked={linkAllToSensor}
-              onChange={(e) => setLinkAllToSensor(e.target.checked)}
+              checked={showSoftTissues}
+              onChange={(e) => setShowSoftTissues(e.target.checked)}
               className="w-4 h-4"
             />
-            <span className="text-sm font-semibold">Связать всё с датчиком</span>
+            <span className="text-sm">Показать мягкие ткани</span>
           </label>
-          <p className="text-xs text-gray-600 mt-1">
-            При включении тубус и свет двигаются вместе с датчиком
-          </p>
+        </div>
+
+        {/* Текущие координаты */}
+        <div className="mb-4 p-3 bg-gray-50 rounded-xl">
+          <h4 className="text-sm font-semibold mb-2">Текущие координаты</h4>
+          <div className="text-xs font-mono space-y-1 max-h-48 overflow-y-auto">
+            <div className="border-b pb-1">
+              <div className="font-semibold">Зубы верхние:</div>
+              <div>P: [{teethUpperPivotPos.map(v => v.toFixed(2)).join(', ')}]</div>
+              <div>O: [{teethUpperObjPos.map(v => v.toFixed(2)).join(', ')}]</div>
+            </div>
+            <div className="border-b pb-1">
+              <div className="font-semibold">Зубы нижние:</div>
+              <div>P: [{teethLowerPivotPos.map(v => v.toFixed(2)).join(', ')}]</div>
+              <div>O: [{teethLowerObjPos.map(v => v.toFixed(2)).join(', ')}]</div>
+            </div>
+            {showSoftTissues && (
+              <>
+                <div className="border-b pb-1">
+                  <div className="font-semibold">Десны верхние:</div>
+                  <div>P: [{gumsUpperPivotPos.map(v => v.toFixed(2)).join(', ')}]</div>
+                  <div>O: [{gumsUpperObjPos.map(v => v.toFixed(2)).join(', ')}]</div>
+                </div>
+                <div className="border-b pb-1">
+                  <div className="font-semibold">Десны нижние:</div>
+                  <div>P: [{gumsLowerPivotPos.map(v => v.toFixed(2)).join(', ')}]</div>
+                  <div>O: [{gumsLowerObjPos.map(v => v.toFixed(2)).join(', ')}]</div>
+                </div>
+                <div className="border-b pb-1">
+                  <div className="font-semibold">Гортань:</div>
+                  <div>P: [{throatPivotPos.map(v => v.toFixed(2)).join(', ')}]</div>
+                  <div>O: [{throatObjPos.map(v => v.toFixed(2)).join(', ')}]</div>
+                </div>
+                <div className="border-b pb-1">
+                  <div className="font-semibold">Язык:</div>
+                  <div>P: [{tonguePivotPos.map(v => v.toFixed(2)).join(', ')}]</div>
+                  <div>O: [{tongueObjPos.map(v => v.toFixed(2)).join(', ')}]</div>
+                </div>
+              </>
+            )}
+            <div className="border-b pb-1">
+              <div className="font-semibold">Датчик:</div>
+              <div>P: [{sensorPivotPos.map(v => v.toFixed(2)).join(', ')}]</div>
+              <div>O: [{sensorObjPos.map(v => v.toFixed(2)).join(', ')}]</div>
+            </div>
+            <div>
+              <div className="font-semibold">Свет:</div>
+              <div>Pos: [{lightPos.map(v => v.toFixed(2)).join(', ')}]</div>
+              <div>Rot: [{lightRot.map(v => v.toFixed(2)).join(', ')}]</div>
+            </div>
+          </div>
         </div>
 
         {/* Выбор объекта */}
@@ -469,166 +545,380 @@ export function DentalPositioningSimulator() {
           <label className="text-sm font-semibold mb-2 block">Выберите объект:</label>
           <div className="grid grid-cols-2 gap-2">
             <button
-              onClick={() => setSelectedObject('teeth_lower')}
-              className={`py-2 px-3 rounded-xl text-sm font-semibold ${
-                selectedObject === 'teeth_lower'
+              onClick={() => setSelectedObject('teeth_upper')}
+              className={`py-2 px-2 rounded-xl text-xs font-semibold ${
+                selectedObject === 'teeth_upper'
                   ? 'bg-green-500 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  : 'bg-gray-100 text-gray-700'
               }`}
             >
-              Нижние зубы
+              Зубы верх
+            </button>
+            <button
+              onClick={() => setSelectedObject('teeth_lower')}
+              className={`py-2 px-2 rounded-xl text-xs font-semibold ${
+                selectedObject === 'teeth_lower'
+                  ? 'bg-green-500 text-white'
+                  : 'bg-gray-100 text-gray-700'
+              }`}
+            >
+              Зубы низ
+            </button>
+            <button
+              onClick={() => setSelectedObject('gums_upper')}
+              className={`py-2 px-2 rounded-xl text-xs font-semibold ${
+                selectedObject === 'gums_upper'
+                  ? 'bg-green-500 text-white'
+                  : 'bg-gray-100 text-gray-700'
+              }`}
+            >
+              Дёсны верх
+            </button>
+            <button
+              onClick={() => setSelectedObject('gums_lower')}
+              className={`py-2 px-2 rounded-xl text-xs font-semibold ${
+                selectedObject === 'gums_lower'
+                  ? 'bg-green-500 text-white'
+                  : 'bg-gray-100 text-gray-700'
+              }`}
+            >
+              Дёсны низ
+            </button>
+            <button
+              onClick={() => setSelectedObject('throat')}
+              className={`py-2 px-2 rounded-xl text-xs font-semibold ${
+                selectedObject === 'throat'
+                  ? 'bg-green-500 text-white'
+                  : 'bg-gray-100 text-gray-700'
+              }`}
+            >
+              Гортань
+            </button>
+            <button
+              onClick={() => setSelectedObject('tongue')}
+              className={`py-2 px-2 rounded-xl text-xs font-semibold ${
+                selectedObject === 'tongue'
+                  ? 'bg-green-500 text-white'
+                  : 'bg-gray-100 text-gray-700'
+              }`}
+            >
+              Язык
             </button>
             <button
               onClick={() => setSelectedObject('sensor')}
-              className={`py-2 px-3 rounded-xl text-sm font-semibold ${
+              className={`py-2 px-2 rounded-xl text-xs font-semibold ${
                 selectedObject === 'sensor'
                   ? 'bg-green-500 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  : 'bg-gray-100 text-gray-700'
               }`}
             >
               Датчик
             </button>
+            <button
+              onClick={() => setSelectedObject('light')}
+              className={`py-2 px-2 rounded-xl text-xs font-semibold ${
+                selectedObject === 'light'
+                  ? 'bg-green-500 text-white'
+                  : 'bg-gray-100 text-gray-700'
+              }`}
+            >
+              Свет
+            </button>
           </div>
-          <button
-            onClick={() => setSelectedObject('light')}
-            className={`w-full py-2 px-3 rounded-xl text-sm font-semibold mt-2 ${
-              selectedObject === 'light'
-                ? 'bg-green-500 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            Свет + Тубус
-          </button>
         </div>
 
         {/* Настройки выбранного объекта */}
-        {selectedObject === 'teeth_lower' && (
+        {selectedObject && selectedObject !== 'light' && (
           <div>
-            <h4 className="font-bold mb-3">Нижние зубы</h4>
+            <h4 className="font-bold mb-3">
+              {selectedObject === 'teeth_upper' && 'Верхние зубы'}
+              {selectedObject === 'teeth_lower' && 'Нижние зубы'}
+              {selectedObject === 'gums_upper' && 'Дёсны верхние'}
+              {selectedObject === 'gums_lower' && 'Дёсны нижние'}
+              {selectedObject === 'throat' && 'Гортань'}
+              {selectedObject === 'tongue' && 'Язык'}
+              {selectedObject === 'sensor' && 'Датчик'}
+            </h4>
 
-            <div className="mb-3">
-              <label className="text-xs font-semibold mb-1 block">
-                Rotation X (радианы)
-                <input
-                  type="number"
-                  step="0.1"
-                  value={teethLowerRotX.toFixed(2)}
-                  onChange={(e) => setTeethLowerRotX(parseFloat(e.target.value) || 0)}
-                  className="w-full px-2 py-1 border rounded mt-1"
-                />
-              </label>
-            </div>
-
-            <p className="text-xs text-gray-600">
-              Центр ротации смещен к задним зубам (-1.2 по Z)
-            </p>
-          </div>
-        )}
-
-        {selectedObject === 'sensor' && (
-          <div>
-            <h4 className="font-bold mb-3">Датчик</h4>
-
-            <div className="mb-3">
-              <label className="text-xs font-semibold mb-1 block">Position</label>
-              <div className="grid grid-cols-3 gap-2">
+            {/* Pivot Position */}
+            <div className="mb-3 p-2 bg-blue-50 rounded">
+              <label className="text-xs font-bold mb-1 block">Pivot Position</label>
+              <div className="grid grid-cols-3 gap-1">
                 {['X', 'Y', 'Z'].map((axis, i) => (
-                  <label key={axis} className="text-xs">
-                    {axis}:
-                    <input
-                      type="number"
-                      step="0.1"
-                      value={sensorPos[i]}
-                      onChange={(e) => {
-                        const newPos = [...sensorPos] as [number, number, number];
-                        newPos[i] = parseFloat(e.target.value) || 0;
-                        setSensorPos(newPos);
-                      }}
-                      className="w-full px-2 py-1 border rounded mt-1"
-                    />
-                  </label>
+                  <input
+                    key={axis}
+                    type="number"
+                    step="0.1"
+                    value={
+                      selectedObject === 'teeth_upper' ? teethUpperPivotPos[i] :
+                      selectedObject === 'teeth_lower' ? teethLowerPivotPos[i] :
+                      selectedObject === 'gums_upper' ? gumsUpperPivotPos[i] :
+                      selectedObject === 'gums_lower' ? gumsLowerPivotPos[i] :
+                      selectedObject === 'throat' ? throatPivotPos[i] :
+                      selectedObject === 'tongue' ? tonguePivotPos[i] :
+                      sensorPivotPos[i]
+                    }
+                    onChange={(e) => {
+                      const val = parseFloat(e.target.value) || 0;
+                      if (selectedObject === 'teeth_upper') {
+                        const newPos = [...teethUpperPivotPos] as [number, number, number];
+                        newPos[i] = val;
+                        setTeethUpperPivotPos(newPos);
+                      } else if (selectedObject === 'teeth_lower') {
+                        const newPos = [...teethLowerPivotPos] as [number, number, number];
+                        newPos[i] = val;
+                        setTeethLowerPivotPos(newPos);
+                      } else if (selectedObject === 'gums_upper') {
+                        const newPos = [...gumsUpperPivotPos] as [number, number, number];
+                        newPos[i] = val;
+                        setGumsUpperPivotPos(newPos);
+                      } else if (selectedObject === 'gums_lower') {
+                        const newPos = [...gumsLowerPivotPos] as [number, number, number];
+                        newPos[i] = val;
+                        setGumsLowerPivotPos(newPos);
+                      } else if (selectedObject === 'throat') {
+                        const newPos = [...throatPivotPos] as [number, number, number];
+                        newPos[i] = val;
+                        setThroatPivotPos(newPos);
+                      } else if (selectedObject === 'tongue') {
+                        const newPos = [...tonguePivotPos] as [number, number, number];
+                        newPos[i] = val;
+                        setTonguePivotPos(newPos);
+                      } else if (selectedObject === 'sensor') {
+                        const newPos = [...sensorPivotPos] as [number, number, number];
+                        newPos[i] = val;
+                        setSensorPivotPos(newPos);
+                      }
+                    }}
+                    className="w-full px-1 py-1 border rounded text-xs"
+                    placeholder={axis}
+                  />
                 ))}
               </div>
             </div>
 
-            <div className="mb-3">
-              <label className="text-xs font-semibold mb-1 block">Rotation (радианы)</label>
-              <div className="grid grid-cols-3 gap-2">
+            {/* Pivot Rotation */}
+            <div className="mb-3 p-2 bg-blue-50 rounded">
+              <label className="text-xs font-bold mb-1 block">Pivot Rotation</label>
+              <div className="grid grid-cols-3 gap-1">
                 {['X', 'Y', 'Z'].map((axis, i) => (
-                  <label key={axis} className="text-xs">
-                    {axis}:
-                    <input
-                      type="number"
-                      step="0.1"
-                      value={sensorRot[i].toFixed(2)}
-                      onChange={(e) => {
-                        const newRot = [...sensorRot] as [number, number, number];
-                        newRot[i] = parseFloat(e.target.value) || 0;
-                        setSensorRot(newRot);
-                      }}
-                      className="w-full px-2 py-1 border rounded mt-1"
-                    />
-                  </label>
+                  <input
+                    key={axis}
+                    type="number"
+                    step="0.1"
+                    value={(
+                      selectedObject === 'teeth_upper' ? teethUpperPivotRot[i] :
+                      selectedObject === 'teeth_lower' ? teethLowerPivotRot[i] :
+                      selectedObject === 'gums_upper' ? gumsUpperPivotRot[i] :
+                      selectedObject === 'gums_lower' ? gumsLowerPivotRot[i] :
+                      selectedObject === 'throat' ? throatPivotRot[i] :
+                      selectedObject === 'tongue' ? tonguePivotRot[i] :
+                      sensorPivotRot[i]
+                    ).toFixed(2)}
+                    onChange={(e) => {
+                      const val = parseFloat(e.target.value) || 0;
+                      if (selectedObject === 'teeth_upper') {
+                        const newRot = [...teethUpperPivotRot] as [number, number, number];
+                        newRot[i] = val;
+                        setTeethUpperPivotRot(newRot);
+                      } else if (selectedObject === 'teeth_lower') {
+                        const newRot = [...teethLowerPivotRot] as [number, number, number];
+                        newRot[i] = val;
+                        setTeethLowerPivotRot(newRot);
+                      } else if (selectedObject === 'gums_upper') {
+                        const newRot = [...gumsUpperPivotRot] as [number, number, number];
+                        newRot[i] = val;
+                        setGumsUpperPivotRot(newRot);
+                      } else if (selectedObject === 'gums_lower') {
+                        const newRot = [...gumsLowerPivotRot] as [number, number, number];
+                        newRot[i] = val;
+                        setGumsLowerPivotRot(newRot);
+                      } else if (selectedObject === 'throat') {
+                        const newRot = [...throatPivotRot] as [number, number, number];
+                        newRot[i] = val;
+                        setThroatPivotRot(newRot);
+                      } else if (selectedObject === 'tongue') {
+                        const newRot = [...tonguePivotRot] as [number, number, number];
+                        newRot[i] = val;
+                        setTonguePivotRot(newRot);
+                      } else if (selectedObject === 'sensor') {
+                        const newRot = [...sensorPivotRot] as [number, number, number];
+                        newRot[i] = val;
+                        setSensorPivotRot(newRot);
+                      }
+                    }}
+                    className="w-full px-1 py-1 border rounded text-xs"
+                    placeholder={axis}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Object Position */}
+            <div className="mb-3 p-2 bg-green-50 rounded">
+              <label className="text-xs font-bold mb-1 block">Object Position</label>
+              <div className="grid grid-cols-3 gap-1">
+                {['X', 'Y', 'Z'].map((axis, i) => (
+                  <input
+                    key={axis}
+                    type="number"
+                    step="0.1"
+                    value={
+                      selectedObject === 'teeth_upper' ? teethUpperObjPos[i] :
+                      selectedObject === 'teeth_lower' ? teethLowerObjPos[i] :
+                      selectedObject === 'gums_upper' ? gumsUpperObjPos[i] :
+                      selectedObject === 'gums_lower' ? gumsLowerObjPos[i] :
+                      selectedObject === 'throat' ? throatObjPos[i] :
+                      selectedObject === 'tongue' ? tongueObjPos[i] :
+                      sensorObjPos[i]
+                    }
+                    onChange={(e) => {
+                      const val = parseFloat(e.target.value) || 0;
+                      if (selectedObject === 'teeth_upper') {
+                        const newPos = [...teethUpperObjPos] as [number, number, number];
+                        newPos[i] = val;
+                        setTeethUpperObjPos(newPos);
+                      } else if (selectedObject === 'teeth_lower') {
+                        const newPos = [...teethLowerObjPos] as [number, number, number];
+                        newPos[i] = val;
+                        setTeethLowerObjPos(newPos);
+                      } else if (selectedObject === 'gums_upper') {
+                        const newPos = [...gumsUpperObjPos] as [number, number, number];
+                        newPos[i] = val;
+                        setGumsUpperObjPos(newPos);
+                      } else if (selectedObject === 'gums_lower') {
+                        const newPos = [...gumsLowerObjPos] as [number, number, number];
+                        newPos[i] = val;
+                        setGumsLowerObjPos(newPos);
+                      } else if (selectedObject === 'throat') {
+                        const newPos = [...throatObjPos] as [number, number, number];
+                        newPos[i] = val;
+                        setThroatObjPos(newPos);
+                      } else if (selectedObject === 'tongue') {
+                        const newPos = [...tongueObjPos] as [number, number, number];
+                        newPos[i] = val;
+                        setTongueObjPos(newPos);
+                      } else if (selectedObject === 'sensor') {
+                        const newPos = [...sensorObjPos] as [number, number, number];
+                        newPos[i] = val;
+                        setSensorObjPos(newPos);
+                      }
+                    }}
+                    className="w-full px-1 py-1 border rounded text-xs"
+                    placeholder={axis}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Object Rotation */}
+            <div className="mb-3 p-2 bg-green-50 rounded">
+              <label className="text-xs font-bold mb-1 block">Object Rotation</label>
+              <div className="grid grid-cols-3 gap-1">
+                {['X', 'Y', 'Z'].map((axis, i) => (
+                  <input
+                    key={axis}
+                    type="number"
+                    step="0.1"
+                    value={(
+                      selectedObject === 'teeth_upper' ? teethUpperObjRot[i] :
+                      selectedObject === 'teeth_lower' ? teethLowerObjRot[i] :
+                      selectedObject === 'gums_upper' ? gumsUpperObjRot[i] :
+                      selectedObject === 'gums_lower' ? gumsLowerObjRot[i] :
+                      selectedObject === 'throat' ? throatObjRot[i] :
+                      selectedObject === 'tongue' ? tongueObjRot[i] :
+                      sensorObjRot[i]
+                    ).toFixed(2)}
+                    onChange={(e) => {
+                      const val = parseFloat(e.target.value) || 0;
+                      if (selectedObject === 'teeth_upper') {
+                        const newRot = [...teethUpperObjRot] as [number, number, number];
+                        newRot[i] = val;
+                        setTeethUpperObjRot(newRot);
+                      } else if (selectedObject === 'teeth_lower') {
+                        const newRot = [...teethLowerObjRot] as [number, number, number];
+                        newRot[i] = val;
+                        setTeethLowerObjRot(newRot);
+                      } else if (selectedObject === 'gums_upper') {
+                        const newRot = [...gumsUpperObjRot] as [number, number, number];
+                        newRot[i] = val;
+                        setGumsUpperObjRot(newRot);
+                      } else if (selectedObject === 'gums_lower') {
+                        const newRot = [...gumsLowerObjRot] as [number, number, number];
+                        newRot[i] = val;
+                        setGumsLowerObjRot(newRot);
+                      } else if (selectedObject === 'throat') {
+                        const newRot = [...throatObjRot] as [number, number, number];
+                        newRot[i] = val;
+                        setThroatObjRot(newRot);
+                      } else if (selectedObject === 'tongue') {
+                        const newRot = [...tongueObjRot] as [number, number, number];
+                        newRot[i] = val;
+                        setTongueObjRot(newRot);
+                      } else if (selectedObject === 'sensor') {
+                        const newRot = [...sensorObjRot] as [number, number, number];
+                        newRot[i] = val;
+                        setSensorObjRot(newRot);
+                      }
+                    }}
+                    className="w-full px-1 py-1 border rounded text-xs"
+                    placeholder={axis}
+                  />
                 ))}
               </div>
             </div>
 
             <p className="text-xs text-gray-600">
-              Центр вращения внутри датчика
+              Pivot - оси вращения объекта. Object - сам объект.
             </p>
           </div>
         )}
 
+        {/* Настройки света */}
         {selectedObject === 'light' && (
           <div>
-            <h4 className="font-bold mb-3">Свет + Тубус</h4>
+            <h4 className="font-bold mb-3">Свет</h4>
 
             <div className="mb-3">
               <label className="text-xs font-semibold mb-1 block">Position</label>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-3 gap-1">
                 {['X', 'Y', 'Z'].map((axis, i) => (
-                  <label key={axis} className="text-xs">
-                    {axis}:
-                    <input
-                      type="number"
-                      step="0.1"
-                      value={lightPos[i]}
-                      onChange={(e) => {
-                        const newPos = [...lightPos] as [number, number, number];
-                        newPos[i] = parseFloat(e.target.value) || 0;
-                        setLightPos(newPos);
-                      }}
-                      className="w-full px-2 py-1 border rounded mt-1"
-                    />
-                  </label>
+                  <input
+                    key={axis}
+                    type="number"
+                    step="0.1"
+                    value={lightPos[i]}
+                    onChange={(e) => {
+                      const newPos = [...lightPos] as [number, number, number];
+                      newPos[i] = parseFloat(e.target.value) || 0;
+                      setLightPos(newPos);
+                    }}
+                    className="w-full px-1 py-1 border rounded text-xs"
+                    placeholder={axis}
+                  />
                 ))}
               </div>
             </div>
 
             <div className="mb-3">
-              <label className="text-xs font-semibold mb-1 block">
-                Rotation X (радианы)
-                <input
-                  type="number"
-                  step="0.1"
-                  value={lightRotX.toFixed(2)}
-                  onChange={(e) => setLightRotX(parseFloat(e.target.value) || 0)}
-                  className="w-full px-2 py-1 border rounded mt-1"
-                />
-              </label>
-            </div>
-
-            <div className="mb-3">
-              <label className="text-xs font-semibold mb-1 block">
-                Расстояние до датчика
-                <input
-                  type="number"
-                  step="0.1"
-                  value={lightSensorDistance}
-                  onChange={(e) => setLightSensorDistance(parseFloat(e.target.value) || 0)}
-                  className="w-full px-2 py-1 border rounded mt-1"
-                />
-              </label>
+              <label className="text-xs font-semibold mb-1 block">Rotation</label>
+              <div className="grid grid-cols-3 gap-1">
+                {['X', 'Y', 'Z'].map((axis, i) => (
+                  <input
+                    key={axis}
+                    type="number"
+                    step="0.1"
+                    value={lightRot[i].toFixed(2)}
+                    onChange={(e) => {
+                      const newRot = [...lightRot] as [number, number, number];
+                      newRot[i] = parseFloat(e.target.value) || 0;
+                      setLightRot(newRot);
+                    }}
+                    className="w-full px-1 py-1 border rounded text-xs"
+                    placeholder={axis}
+                  />
+                ))}
+              </div>
             </div>
 
             <div className="mb-3">
@@ -656,10 +946,6 @@ export function DentalPositioningSimulator() {
                 />
               </label>
             </div>
-
-            <p className="text-xs text-gray-600">
-              Тубус и свет связаны вместе. Свет автоматически направлен на датчик.
-            </p>
           </div>
         )}
 

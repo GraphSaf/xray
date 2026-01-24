@@ -138,20 +138,20 @@ export function EquipmentGuidePage() {
 
           {/* Coming Soon Notice */}
           <div className="mt-12 bg-black text-white rounded-3xl p-8 sm:p-12">
-            <h3 className="text-2xl sm:text-3xl font-bold mb-4">🤖 Скоро: AI-ассистент</h3>
+            <h3 className="text-2xl sm:text-3xl font-bold mb-4">Скоро: AI-ассистент</h3>
             <p className="text-lg sm:text-xl leading-relaxed mb-6">
               Мы работаем над интеграцией искусственного интеллекта для ответов на ваши вопросы об оборудовании.
               Вы сможете задавать вопросы на естественном языке и получать точные ответы из инструкций.
             </p>
             <div className="flex flex-wrap gap-4">
               <div className="bg-white text-black px-6 py-3 rounded-2xl font-semibold">
-                📄 Загрузка PDF-инструкций
+                Загрузка PDF-инструкций
               </div>
               <div className="bg-white text-black px-6 py-3 rounded-2xl font-semibold">
-                🔍 RAG (поиск по документам)
+                RAG (поиск по документам)
               </div>
               <div className="bg-white text-black px-6 py-3 rounded-2xl font-semibold">
-                💬 Чат с нейросетью
+                Чат с нейросетью
               </div>
             </div>
           </div>
