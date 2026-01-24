@@ -243,20 +243,22 @@ export function DentalPositioningSimulator() {
   const [showAxes, setShowAxes] = useState(true);
   const [selectedObject, setSelectedObject] = useState<SelectedObject>(null);
 
-  // Позиции объектов (редактируемые)
-  const [teethUpperPos, setTeethUpperPos] = useState<[number, number, number]>([0, 0, 0]);
-  const [teethUpperRot, setTeethUpperRot] = useState<[number, number, number]>([0, 0, 0]);
+  // Позиции объектов (редактируемые) - значения по умолчанию из настроек пользователя
+  const [teethUpperPos, setTeethUpperPos] = useState<[number, number, number]>([0, 0.9, 0]);
+  const [teethUpperRot, setTeethUpperRot] = useState<[number, number, number]>([-0.30, 0, 0]);
 
   const [teethLowerPos, setTeethLowerPos] = useState<[number, number, number]>([0, 0, 0]);
   const [teethLowerRot, setTeethLowerRot] = useState<[number, number, number]>([0, 0, 0]);
 
-  const [sensorPos, setSensorPos] = useState<[number, number, number]>([0, 0, 0.5]);
+  const [sensorPos, setSensorPos] = useState<[number, number, number]>([0, 1.4, 0.1]);
   const [sensorRot, setSensorRot] = useState<[number, number, number]>([0, 0, 0]);
 
-  const [tubusPos, setTubusPos] = useState<[number, number, number]>([2.5, 0, 0]);
+  const [tubusPos, setTubusPos] = useState<[number, number, number]>([0, 1, 1.3]);
   const [tubusRot, setTubusRot] = useState<[number, number, number]>([0, 0, 0]);
 
-  // Настройки рентген-света
+  // Настройки рентген-света (отдельно от тубуса)
+  const [lightPos, setLightPos] = useState<[number, number, number]>([0, 1, 1.3]);
+  const [lightRot, setLightRot] = useState<[number, number, number]>([0, 0, 0]);
   const [xrayLightIntensity, setXrayLightIntensity] = useState(100);
   const [xrayLightAngle, setXrayLightAngle] = useState(15); // градусы
 
@@ -269,7 +271,7 @@ export function DentalPositioningSimulator() {
       xrayLightRef.current.target.position.set(...sensorPos);
       xrayLightRef.current.target.updateMatrixWorld();
     }
-  }, [sensorPos, tubusPos]);
+  }, [sensorPos, lightPos]);
 
   const resetCamera = () => {
     if (controlsRef.current) {
@@ -308,20 +310,24 @@ export function DentalPositioningSimulator() {
             intensity={1}
           />
 
-          {/* РЕНТГЕН-СВЕТ: Узконаправленный из тубуса на сенсор */}
-          <spotLight
-            ref={xrayLightRef}
-            position={tubusPos}
-            angle={xrayLightAngle * Math.PI / 180}
-            penumbra={0.05}
-            intensity={xrayLightIntensity}
-            color="#E5FFE5"
-            distance={10}
-            decay={2}
-            castShadow
-            shadow-mapSize={[2048, 2048]}
-            shadow-bias={-0.0001}
-          />
+          {/* РЕНТГЕН-СВЕТ: Узконаправленный источник света */}
+          <group position={lightPos} rotation={lightRot}>
+            <spotLight
+              ref={xrayLightRef}
+              angle={xrayLightAngle * Math.PI / 180}
+              penumbra={0.05}
+              intensity={xrayLightIntensity}
+              color="#E5FFE5"
+              distance={10}
+              decay={2}
+              castShadow
+              shadow-mapSize={[4096, 4096]}
+              shadow-bias={-0.00001}
+              shadow-camera-near={0.1}
+              shadow-camera-far={10}
+            />
+            {showAxes && <AxesHelper size={0.3} position={[0, 0, 0]} />}
+          </group>
 
           {/* Объекты сцены */}
           <Suspense fallback={<LoadingPlaceholder />}>
@@ -664,6 +670,50 @@ export function DentalPositioningSimulator() {
             <h4 className="font-bold mb-3">💡 Рентген-свет</h4>
 
             <div className="mb-3">
+              <label className="text-xs font-semibold mb-1 block">Position</label>
+              <div className="grid grid-cols-3 gap-2">
+                {['X', 'Y', 'Z'].map((axis, i) => (
+                  <label key={axis} className="text-xs">
+                    {axis}:
+                    <input
+                      type="number"
+                      step="0.1"
+                      value={lightPos[i]}
+                      onChange={(e) => {
+                        const newPos = [...lightPos] as [number, number, number];
+                        newPos[i] = parseFloat(e.target.value) || 0;
+                        setLightPos(newPos);
+                      }}
+                      className="w-full px-2 py-1 border rounded mt-1"
+                    />
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div className="mb-3">
+              <label className="text-xs font-semibold mb-1 block">Rotation (радианы)</label>
+              <div className="grid grid-cols-3 gap-2">
+                {['X', 'Y', 'Z'].map((axis, i) => (
+                  <label key={axis} className="text-xs">
+                    {axis}:
+                    <input
+                      type="number"
+                      step="0.1"
+                      value={lightRot[i].toFixed(2)}
+                      onChange={(e) => {
+                        const newRot = [...lightRot] as [number, number, number];
+                        newRot[i] = parseFloat(e.target.value) || 0;
+                        setLightRot(newRot);
+                      }}
+                      className="w-full px-2 py-1 border rounded mt-1"
+                    />
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div className="mb-3">
               <label className="text-xs font-semibold mb-1 block">
                 Интенсивность
                 <input
@@ -690,7 +740,7 @@ export function DentalPositioningSimulator() {
             </div>
 
             <p className="text-xs text-gray-600">
-              Свет направлен из тубуса на датчик
+              Свет автоматически направлен на датчик
             </p>
           </div>
         )}
