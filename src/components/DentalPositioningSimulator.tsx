@@ -12,8 +12,12 @@ const S3_BASE_URL = 'https://s3.ru1.storage.beget.cloud/0f31e7f56d88-xrayhub';
 const MODEL_URLS = {
   teethUpper: `${S3_BASE_URL}/teeth_upper.glb`,
   teethLower: `${S3_BASE_URL}/teeth_lower.glb`,
+  gumsLower: `${S3_BASE_URL}/gums_lower.glb`,
+  gumsUpper: `${S3_BASE_URL}/ms_upper.glb`,
+  throat: `${S3_BASE_URL}/throat.glb`,
+  tongue: `${S3_BASE_URL}/tongue.glb`,
   xraySensor: `${S3_BASE_URL}/xray_sensor.glb`,
-  placeholder: '/models/placeholder.glb', // Локально
+  placeholder: '/models/placeholder.glb',
 };
 
 // Компонент загрузки (placeholder) - вращающийся
@@ -61,96 +65,65 @@ function AxesHelper({ size = 1, position = [0, 0, 0] as [number, number, number]
 }
 
 
-// Компонент верхних зубов
-function TeethUpperModel({
-  position,
-  rotation,
+// Универсальный компонент модели с pivot и object трансформациями
+function UniversalModel({
+  modelUrl,
+  pivotPosition,
+  pivotRotation,
+  objectPosition,
+  objectRotation,
+  opacity = 1,
   showAxes,
   isSelected,
-  onClick
+  onClick,
+  label
 }: {
-  position: [number, number, number];
-  rotation: [number, number, number];
+  modelUrl: string;
+  pivotPosition: [number, number, number];
+  pivotRotation: [number, number, number];
+  objectPosition: [number, number, number];
+  objectRotation: [number, number, number];
+  opacity?: number;
   showAxes: boolean;
   isSelected: boolean;
   onClick: () => void;
+  label: string;
 }) {
-  const { scene } = useGLTF(MODEL_URLS.teethUpper);
+  const { scene } = useGLTF(modelUrl);
   const clonedScene = scene.clone(true);
 
-  // Включаем отбрасывание теней для всех мешей
+  // Настройка теней и прозрачности
   React.useEffect(() => {
     clonedScene.traverse((child) => {
       if ((child as THREE.Mesh).isMesh) {
         child.castShadow = true;
         child.receiveShadow = true;
+
+        // Добавляем прозрачность если нужно
+        if (opacity < 1 && child.material) {
+          const material = child.material as THREE.MeshStandardMaterial;
+          material.transparent = true;
+          material.opacity = opacity;
+        }
       }
     });
-  }, [clonedScene]);
+  }, [clonedScene, opacity]);
 
   return (
     <group onClick={onClick}>
-      <primitive
-        object={clonedScene}
-        position={position}
-        rotation={rotation}
-      />
-      {showAxes && <AxesHelper size={0.5} position={position} />}
-      {isSelected && (
-        <Html position={[position[0], position[1] + 1.5, position[2]]} center>
-          <div className="bg-green-500 text-white px-2 py-1 rounded text-xs font-bold">
-            ВЫБРАНО
-          </div>
-        </Html>
-      )}
-    </group>
-  );
-}
-
-// Компонент нижних зубов (с кастомным центром ротации)
-function TeethLowerModel({
-  position,
-  rotationX,
-  pivot,
-  showAxes,
-  isSelected,
-  onClick
-}: {
-  position: [number, number, number];
-  rotationX: number;
-  pivot: [number, number, number];
-  showAxes: boolean;
-  isSelected: boolean;
-  onClick: () => void;
-}) {
-  const { scene } = useGLTF(MODEL_URLS.teethLower);
-  const clonedScene = scene.clone(true);
-
-  // Включаем отбрасывание теней для всех мешей
-  React.useEffect(() => {
-    clonedScene.traverse((child) => {
-      if ((child as THREE.Mesh).isMesh) {
-        child.castShadow = true;
-        child.receiveShadow = true;
-      }
-    });
-  }, [clonedScene]);
-
-  return (
-    <group onClick={onClick} position={position}>
-      {/* Pivot point для смещения центра ротации */}
-      <group position={pivot}>
-        <group rotation={[rotationX, 0, 0]}>
-          <group position={[-pivot[0], -pivot[1], -pivot[2]]}>
-            <primitive object={clonedScene} />
-          </group>
+      {/* Pivot (оси вращения) */}
+      <group position={pivotPosition} rotation={pivotRotation}>
+        {/* Object (сам объект) */}
+        <group position={objectPosition} rotation={objectRotation}>
+          <primitive object={clonedScene} />
         </group>
+        {/* Оси в центре pivot */}
+        {showAxes && <AxesHelper size={0.5} position={[0, 0, 0]} />}
       </group>
-      {showAxes && <AxesHelper size={0.5} position={[0, 0, 0]} />}
       {isSelected && (
-        <Html position={[0, 1.5, 0]} center>
+        <Html position={[pivotPosition[0], pivotPosition[1] + 1.5, pivotPosition[2]]} center>
           <div className="bg-green-500 text-white px-2 py-1 rounded text-xs font-bold">
-            ВЫБРАНО
+            {label}
           </div>
         </Html>
       )}
@@ -158,106 +131,49 @@ function TeethLowerModel({
   );
 }
 
-// Компонент датчика (полное управление, центр внутри датчика)
-function XRaySensorModel({
-  position,
-  rotation,
-  showAxes,
-  isSelected,
-  onClick
-}: {
-  position: [number, number, number];
-  rotation: [number, number, number];
-  showAxes: boolean;
-  isSelected: boolean;
-  onClick: () => void;
-}) {
-  const { scene } = useGLTF(MODEL_URLS.xraySensor);
-  const clonedScene = scene.clone(true);
 
-  // Датчик должен принимать тени
-  React.useEffect(() => {
-    clonedScene.traverse((child) => {
-      if ((child as THREE.Mesh).isMesh) {
-        child.receiveShadow = true;
-        child.castShadow = false; // датчик не отбрасывает тени
-      }
-    });
-  }, [clonedScene]);
-
-  return (
-    <group onClick={onClick} position={position} rotation={rotation}>
-      <primitive object={clonedScene} />
-      {showAxes && <AxesHelper size={0.3} position={[0, 0, 0]} />}
-      {isSelected && (
-        <Html position={[0, 1.5, 0]} center>
-          <div className="bg-green-500 text-white px-2 py-1 rounded text-xs font-bold">
-            ВЫБРАНО
-          </div>
-        </Html>
-      )}
-    </group>
-  );
-}
-
-// Компонент процедурного тубуса вокруг света
-function ProceduralTubus({
+// Компонент визуализации света (без тубуса)
+function LightVisualization({
   lightAngle,
   showAxes
 }: {
   lightAngle: number;
   showAxes: boolean;
 }) {
-  // Размеры тубуса
-  const outerRadius = 0.15;
-  const innerRadius = 0.12;
-  const length = 0.8;
-
-  // Вектор направления (стрелка вниз по -Z)
-  const arrowLength = 1.5;
+  // Вектор направления света (стрелка)
+  const arrowLength = 2;
 
   // Контур конуса освещения
-  const coneDistance = 2;
+  const coneDistance = 2.5;
   const coneRadius = Math.tan(lightAngle * Math.PI / 180) * coneDistance;
 
   return (
     <group>
-      {/* Внешний цилиндр */}
-      <mesh position={[0, 0, -length / 2]}>
-        <cylinderGeometry args={[outerRadius, outerRadius, length, 16]} />
-        <meshStandardMaterial color="#4a5568" metalness={0.6} roughness={0.3} />
-      </mesh>
-
-      {/* Внутренний цилиндр (вырез) */}
-      <mesh position={[0, 0, -length / 2]}>
-        <cylinderGeometry args={[innerRadius, innerRadius, length + 0.01, 16]} />
-        <meshStandardMaterial color="#000000" transparent opacity={0.5} />
-      </mesh>
-
-      {/* Вектор направления (стрелка) */}
+      {/* Вектор направления (стрелка вдоль -Z) */}
       <arrowHelper
         args={[
-          new THREE.Vector3(0, 0, -1), // направление
-          new THREE.Vector3(0, 0, 0), // начало
-          arrowLength, // длина
-          0x888888, // цвет
+          new THREE.Vector3(0, 0, -1), // направление вдоль -Z (вниз)
+          new THREE.Vector3(0, 0, 0), // начало в (0,0,0)
+          arrowLength, // длина стрелки
+          0xff0000, // красный цвет для видимости
           0.2, // длина головки
-          0.1 // ширина головки
+          0.15 // ширина головки
         ]}
       />
 
       {/* Контур конуса освещения (wireframe) */}
-      <mesh position={[0, 0, -coneDistance]}>
-        <coneGeometry args={[coneRadius, coneDistance, 16]} />
-        <meshBasicMaterial color="#888888" wireframe opacity={0.3} transparent />
+      <mesh position={[0, 0, -coneDistance / 2]} rotation={[Math.PI, 0, 0]}>
+        <coneGeometry args={[coneRadius, coneDistance, 16, 1, true]} />
+        <meshBasicMaterial color="#00ff00" wireframe side={THREE.DoubleSide} />
       </mesh>
 
-      {showAxes && <AxesHelper size={0.3} position={[0, 0, 0]} />}
+      {/* Оси координат для отладки */}
+      {showAxes && <AxesHelper size={0.5} position={[0, 0, 0]} />}
     </group>
   );
 }
 
-type SelectedObject = 'teeth_upper' | 'teeth_lower' | 'sensor' | 'tubus' | 'light' | null;
+type SelectedObject = 'teeth_upper' | 'teeth_lower' | 'gums_upper' | 'gums_lower' | 'throat' | 'tongue' | 'sensor' | 'light' | null;
 
 // Основной компонент симулятора
 export function DentalPositioningSimulator() {
@@ -265,31 +181,58 @@ export function DentalPositioningSimulator() {
   const [showAxes, setShowAxes] = useState(true);
   const [selectedObject, setSelectedObject] = useState<SelectedObject>(null);
 
-  // Позиции объектов (редактируемые) - значения по умолчанию из настроек пользователя
-  // Верхние зубы - ФИКСИРОВАННЫЕ (не редактируются)
-  const teethUpperPos: [number, number, number] = [0, 0.9, 0];
-  const teethUpperRot: [number, number, number] = [-0.30, 0, 0];
+  // Все объекты в центре мира - раздельные настройки Pivot и Object
 
-  // Нижние зубы - только ротация по X, центр ротации смещен к задним зубам
-  const [teethLowerRotX, setTeethLowerRotX] = useState(0);
-  const teethLowerPos: [number, number, number] = [0, 0, 0];
-  const teethLowerPivot: [number, number, number] = [0, 0, -1.2]; // Смещение центра ротации
+  // Верхние зубы
+  const [teethUpperPivotPos, setTeethUpperPivotPos] = useState<[number, number, number]>([0, 0, 0]);
+  const [teethUpperPivotRot, setTeethUpperPivotRot] = useState<[number, number, number]>([0, 0, 0]);
+  const [teethUpperObjPos, setTeethUpperObjPos] = useState<[number, number, number]>([0, 0, 0]);
+  const [teethUpperObjRot, setTeethUpperObjRot] = useState<[number, number, number]>([0, 0, 0]);
 
-  // Сенсор - полное управление по всем осям
-  const [sensorPos, setSensorPos] = useState<[number, number, number]>([0, 1.4, 0.1]);
-  const [sensorRot, setSensorRot] = useState<[number, number, number]>([0, 0, 0]);
+  // Нижние зубы
+  const [teethLowerPivotPos, setTeethLowerPivotPos] = useState<[number, number, number]>([0, 0, 0]);
+  const [teethLowerPivotRot, setTeethLowerPivotRot] = useState<[number, number, number]>([0, 0, 0]);
+  const [teethLowerObjPos, setTeethLowerObjPos] = useState<[number, number, number]>([0, 0, 0]);
+  const [teethLowerObjRot, setTeethLowerObjRot] = useState<[number, number, number]>([0, 0, 0]);
 
-  // Расстояние между светом и датчиком
-  const [lightSensorDistance, setLightSensorDistance] = useState(1.3);
+  // Верхние мягкие ткани
+  const [gumsUpperPivotPos, setGumsUpperPivotPos] = useState<[number, number, number]>([0, 0, 0]);
+  const [gumsUpperPivotRot, setGumsUpperPivotRot] = useState<[number, number, number]>([0, 0, 0]);
+  const [gumsUpperObjPos, setGumsUpperObjPos] = useState<[number, number, number]>([0, 0, 0]);
+  const [gumsUpperObjRot, setGumsUpperObjRot] = useState<[number, number, number]>([0, 0, 0]);
 
-  // Настройки рентген-света (связан с тубусом)
-  const [lightPos, setLightPos] = useState<[number, number, number]>([0, -61, 6.8]);
-  const [lightRotX, setLightRotX] = useState(-8.50);
+  // Нижние мягкие ткани
+  const [gumsLowerPivotPos, setGumsLowerPivotPos] = useState<[number, number, number]>([0, 0, 0]);
+  const [gumsLowerPivotRot, setGumsLowerPivotRot] = useState<[number, number, number]>([0, 0, 0]);
+  const [gumsLowerObjPos, setGumsLowerObjPos] = useState<[number, number, number]>([0, 0, 0]);
+  const [gumsLowerObjRot, setGumsLowerObjRot] = useState<[number, number, number]>([0, 0, 0]);
+
+  // Гортань
+  const [throatPivotPos, setThroatPivotPos] = useState<[number, number, number]>([0, 0, 0]);
+  const [throatPivotRot, setThroatPivotRot] = useState<[number, number, number]>([0, 0, 0]);
+  const [throatObjPos, setThroatObjPos] = useState<[number, number, number]>([0, 0, 0]);
+  const [throatObjRot, setThroatObjRot] = useState<[number, number, number]>([0, 0, 0]);
+
+  // Язык
+  const [tonguePivotPos, setTonguePivotPos] = useState<[number, number, number]>([0, 0, 0]);
+  const [tonguePivotRot, setTonguePivotRot] = useState<[number, number, number]>([0, 0, 0]);
+  const [tongueObjPos, setTongueObjPos] = useState<[number, number, number]>([0, 0, 0]);
+  const [tongueObjRot, setTongueObjRot] = useState<[number, number, number]>([0, 0, 0]);
+
+  // Датчик
+  const [sensorPivotPos, setSensorPivotPos] = useState<[number, number, number]>([0, 0, 0]);
+  const [sensorPivotRot, setSensorPivotRot] = useState<[number, number, number]>([0, 0, 0]);
+  const [sensorObjPos, setSensorObjPos] = useState<[number, number, number]>([0, 0, 0]);
+  const [sensorObjRot, setSensorObjRot] = useState<[number, number, number]>([0, 0, 0]);
+
+  // Свет
+  const [lightPos, setLightPos] = useState<[number, number, number]>([0, 0, 0]);
+  const [lightRot, setLightRot] = useState<[number, number, number]>([0, 0, 0]);
   const [xrayLightIntensity, setXrayLightIntensity] = useState(220);
   const [xrayLightAngle, setXrayLightAngle] = useState(9);
 
-  // Галочка для связки всех элементов
-  const [linkAllToSensor, setLinkAllToSensor] = useState(false);
+  // Прозрачность челюстей
+  const [teethOpacity, setTeethOpacity] = useState(0.5);
 
   const controlsRef = useRef<OrbitControlsType>(null);
   const xrayLightRef = useRef<THREE.SpotLight>(null);
@@ -297,10 +240,11 @@ export function DentalPositioningSimulator() {
   // Обновляем направление SpotLight на сенсор
   React.useEffect(() => {
     if (xrayLightRef.current) {
-      xrayLightRef.current.target.position.set(...sensorPos);
+      // Свет направлен на позицию pivot сенсора
+      xrayLightRef.current.target.position.set(...sensorPivotPos);
       xrayLightRef.current.target.updateMatrixWorld();
     }
-  }, [lightPos, lightRotX]);
+  }, [lightPos, lightRot, sensorPivotPos]);
 
   const resetCamera = () => {
     if (controlsRef.current) {
@@ -339,8 +283,8 @@ export function DentalPositioningSimulator() {
             intensity={1}
           />
 
-          {/* РЕНТГЕН-СВЕТ с процедурным тубусом */}
-          <group position={lightPos} rotation={[lightRotX, 0, 0]}>
+          {/* РЕНТГЕН-СВЕТ */}
+          <group position={lightPos} rotation={lightRot}>
             <spotLight
               ref={xrayLightRef}
               angle={xrayLightAngle * Math.PI / 180}
@@ -355,36 +299,103 @@ export function DentalPositioningSimulator() {
               shadow-camera-near={0.1}
               shadow-camera-far={10}
             />
-            {/* Процедурный тубус вокруг света */}
-            <ProceduralTubus lightAngle={xrayLightAngle} showAxes={showAxes} />
+            {/* Визуализация света */}
+            <LightVisualization lightAngle={xrayLightAngle} showAxes={showAxes} />
           </group>
 
           {/* Объекты сцены */}
           <Suspense fallback={<LoadingPlaceholder />}>
-            {/* Верхние зубы - фиксированные */}
-            <TeethUpperModel
-              position={teethUpperPos}
-              rotation={teethUpperRot}
+            {/* Верхние зубы */}
+            <UniversalModel
+              modelUrl={MODEL_URLS.teethUpper}
+              pivotPosition={teethUpperPivotPos}
+              pivotRotation={teethUpperPivotRot}
+              objectPosition={teethUpperObjPos}
+              objectRotation={teethUpperObjRot}
+              opacity={teethOpacity}
               showAxes={showAxes}
-              isSelected={false}
-              onClick={() => {}}
+              isSelected={selectedObject === 'teeth_upper'}
+              onClick={() => setSelectedObject('teeth_upper')}
+              label="Верхние зубы"
             />
-            {/* Нижние зубы - только ротация X с кастомным центром */}
-            <TeethLowerModel
-              position={teethLowerPos}
-              rotationX={teethLowerRotX}
-              pivot={teethLowerPivot}
+
+            {/* Нижние зубы */}
+            <UniversalModel
+              modelUrl={MODEL_URLS.teethLower}
+              pivotPosition={teethLowerPivotPos}
+              pivotRotation={teethLowerPivotRot}
+              objectPosition={teethLowerObjPos}
+              objectRotation={teethLowerObjRot}
+              opacity={teethOpacity}
               showAxes={showAxes}
               isSelected={selectedObject === 'teeth_lower'}
               onClick={() => setSelectedObject('teeth_lower')}
+              label="Нижние зубы"
             />
-            {/* Датчик - полное управление */}
-            <XRaySensorModel
-              position={sensorPos}
-              rotation={sensorRot}
+
+            {/* Верхние мягкие ткани */}
+            <UniversalModel
+              modelUrl={MODEL_URLS.gumsUpper}
+              pivotPosition={gumsUpperPivotPos}
+              pivotRotation={gumsUpperPivotRot}
+              objectPosition={gumsUpperObjPos}
+              objectRotation={gumsUpperObjRot}
+              showAxes={showAxes}
+              isSelected={selectedObject === 'gums_upper'}
+              onClick={() => setSelectedObject('gums_upper')}
+              label="Дёсны верхние"
+            />
+
+            {/* Нижние мягкие ткани */}
+            <UniversalModel
+              modelUrl={MODEL_URLS.gumsLower}
+              pivotPosition={gumsLowerPivotPos}
+              pivotRotation={gumsLowerPivotRot}
+              objectPosition={gumsLowerObjPos}
+              objectRotation={gumsLowerObjRot}
+              showAxes={showAxes}
+              isSelected={selectedObject === 'gums_lower'}
+              onClick={() => setSelectedObject('gums_lower')}
+              label="Дёсны нижние"
+            />
+
+            {/* Гортань */}
+            <UniversalModel
+              modelUrl={MODEL_URLS.throat}
+              pivotPosition={throatPivotPos}
+              pivotRotation={throatPivotRot}
+              objectPosition={throatObjPos}
+              objectRotation={throatObjRot}
+              showAxes={showAxes}
+              isSelected={selectedObject === 'throat'}
+              onClick={() => setSelectedObject('throat')}
+              label="Гортань"
+            />
+
+            {/* Язык */}
+            <UniversalModel
+              modelUrl={MODEL_URLS.tongue}
+              pivotPosition={tonguePivotPos}
+              pivotRotation={tonguePivotRot}
+              objectPosition={tongueObjPos}
+              objectRotation={tongueObjRot}
+              showAxes={showAxes}
+              isSelected={selectedObject === 'tongue'}
+              onClick={() => setSelectedObject('tongue')}
+              label="Язык"
+            />
+
+            {/* Датчик */}
+            <UniversalModel
+              modelUrl={MODEL_URLS.xraySensor}
+              pivotPosition={sensorPivotPos}
+              pivotRotation={sensorPivotRot}
+              objectPosition={sensorObjPos}
+              objectRotation={sensorObjRot}
               showAxes={showAxes}
               isSelected={selectedObject === 'sensor'}
               onClick={() => setSelectedObject('sensor')}
+              label="Датчик"
             />
           </Suspense>
         </Canvas>
