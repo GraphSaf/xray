@@ -108,16 +108,18 @@ function TeethUpperModel({
   );
 }
 
-// Компонент нижних зубов
+// Компонент нижних зубов (с кастомным центром ротации)
 function TeethLowerModel({
   position,
-  rotation,
+  rotationX,
+  pivot,
   showAxes,
   isSelected,
   onClick
 }: {
   position: [number, number, number];
-  rotation: [number, number, number];
+  rotationX: number;
+  pivot: [number, number, number];
   showAxes: boolean;
   isSelected: boolean;
   onClick: () => void;
@@ -136,15 +138,18 @@ function TeethLowerModel({
   }, [clonedScene]);
 
   return (
-    <group onClick={onClick}>
-      <primitive
-        object={clonedScene}
-        position={position}
-        rotation={rotation}
-      />
-      {showAxes && <AxesHelper size={0.5} position={position} />}
+    <group onClick={onClick} position={position}>
+      {/* Pivot point для смещения центра ротации */}
+      <group position={pivot}>
+        <group rotation={[rotationX, 0, 0]}>
+          <group position={[-pivot[0], -pivot[1], -pivot[2]]}>
+            <primitive object={clonedScene} />
+          </group>
+        </group>
+      </group>
+      {showAxes && <AxesHelper size={0.5} position={[0, 0, 0]} />}
       {isSelected && (
-        <Html position={[position[0], position[1] + 1.5, position[2]]} center>
+        <Html position={[0, 1.5, 0]} center>
           <div className="bg-green-500 text-white px-2 py-1 rounded text-xs font-bold">
             ВЫБРАНО
           </div>
@@ -154,16 +159,18 @@ function TeethLowerModel({
   );
 }
 
-// Компонент датчика
+// Компонент датчика (с кастомным центром ротации, только Z)
 function XRaySensorModel({
   position,
-  rotation,
+  rotationZ,
+  pivot,
   showAxes,
   isSelected,
   onClick
 }: {
   position: [number, number, number];
-  rotation: [number, number, number];
+  rotationZ: number;
+  pivot: [number, number, number];
   showAxes: boolean;
   isSelected: boolean;
   onClick: () => void;
@@ -182,15 +189,18 @@ function XRaySensorModel({
   }, [clonedScene]);
 
   return (
-    <group onClick={onClick}>
-      <primitive
-        object={clonedScene}
-        position={position}
-        rotation={rotation}
-      />
-      {showAxes && <AxesHelper size={0.3} position={position} />}
+    <group onClick={onClick} position={position}>
+      {/* Pivot point для смещения центра ротации */}
+      <group position={pivot}>
+        <group rotation={[0, 0, rotationZ]}>
+          <group position={[-pivot[0], -pivot[1], -pivot[2]]}>
+            <primitive object={clonedScene} />
+          </group>
+        </group>
+      </group>
+      {showAxes && <AxesHelper size={0.3} position={[0, 0, 0]} />}
       {isSelected && (
-        <Html position={[position[0], position[1] + 1.5, position[2]]} center>
+        <Html position={[0, 1.5, 0]} center>
           <div className="bg-green-500 text-white px-2 py-1 rounded text-xs font-bold">
             ВЫБРАНО
           </div>
@@ -200,37 +210,22 @@ function XRaySensorModel({
   );
 }
 
-// Компонент тубуса
+// Компонент тубуса (фиксированный, связан со светом)
 function XRayTubusModel({
   position,
   rotation,
-  showAxes,
-  isSelected,
-  onClick
+  showAxes
 }: {
   position: [number, number, number];
   rotation: [number, number, number];
   showAxes: boolean;
-  isSelected: boolean;
-  onClick: () => void;
 }) {
   const { scene } = useGLTF(MODEL_URLS.xrayTubus);
 
   return (
-    <group onClick={onClick}>
-      <primitive
-        object={scene.clone(true)}
-        position={position}
-        rotation={rotation}
-      />
-      {showAxes && <AxesHelper size={0.5} position={position} />}
-      {isSelected && (
-        <Html position={[position[0], position[1] + 1.5, position[2]]} center>
-          <div className="bg-green-500 text-white px-2 py-1 rounded text-xs font-bold">
-            ВЫБРАНО
-          </div>
-        </Html>
-      )}
+    <group position={position} rotation={rotation}>
+      <primitive object={scene.clone(true)} />
+      {showAxes && <AxesHelper size={0.5} position={[0, 0, 0]} />}
     </group>
   );
 }
@@ -244,23 +239,33 @@ export function DentalPositioningSimulator() {
   const [selectedObject, setSelectedObject] = useState<SelectedObject>(null);
 
   // Позиции объектов (редактируемые) - значения по умолчанию из настроек пользователя
-  const [teethUpperPos, setTeethUpperPos] = useState<[number, number, number]>([0, 0.9, 0]);
-  const [teethUpperRot, setTeethUpperRot] = useState<[number, number, number]>([-0.30, 0, 0]);
+  // Верхние зубы - ФИКСИРОВАННЫЕ (не редактируются)
+  const teethUpperPos: [number, number, number] = [0, 0.9, 0];
+  const teethUpperRot: [number, number, number] = [-0.30, 0, 0];
 
-  const [teethLowerPos, setTeethLowerPos] = useState<[number, number, number]>([0, 0, 0]);
-  const [teethLowerRot, setTeethLowerRot] = useState<[number, number, number]>([0, 0, 0]);
+  // Нижние зубы - только ротация по X, центр ротации смещен к задним зубам
+  const [teethLowerRotX, setTeethLowerRotX] = useState(0);
+  const teethLowerPos: [number, number, number] = [0, 0, 0];
+  const teethLowerPivot: [number, number, number] = [0, 0, -1.2]; // Смещение центра ротации
 
-  const [sensorPos, setSensorPos] = useState<[number, number, number]>([0, 1.4, 0.1]);
-  const [sensorRot, setSensorRot] = useState<[number, number, number]>([0, 0, 0]);
+  // Сенсор - только ротация по Z, центр смещен
+  const [sensorRotZ, setSensorRotZ] = useState(0);
+  const sensorPos: [number, number, number] = [0, 1.4, 0.1];
+  const sensorPivot: [number, number, number] = [0, -0.4, 1]; // Смещение центра
 
-  const [tubusPos, setTubusPos] = useState<[number, number, number]>([0, 1, 1.3]);
-  const [tubusRot, setTubusRot] = useState<[number, number, number]>([0, 0, 0]);
+  // Тубус + Свет - связаны вместе
+  const [tubusDistance, setTubusDistance] = useState(1.3); // Расстояние от сенсора
+  const tubusPos: [number, number, number] = [0, 1, 1.3];
+  const tubusRot: [number, number, number] = [0, 0, 0];
 
-  // Настройки рентген-света (отдельно от тубуса)
-  const [lightPos, setLightPos] = useState<[number, number, number]>([0, 1, 1.3]);
-  const [lightRot, setLightRot] = useState<[number, number, number]>([0, 0, 0]);
-  const [xrayLightIntensity, setXrayLightIntensity] = useState(100);
-  const [xrayLightAngle, setXrayLightAngle] = useState(15); // градусы
+  // Настройки рентген-света (связан с тубусом)
+  const [lightPos, setLightPos] = useState<[number, number, number]>([0, -61, 6.8]);
+  const [lightRotX, setLightRotX] = useState(-8.50);
+  const [xrayLightIntensity, setXrayLightIntensity] = useState(220);
+  const [xrayLightAngle, setXrayLightAngle] = useState(9);
+
+  // Галочка для связки всех элементов
+  const [linkAllToSensor, setLinkAllToSensor] = useState(false);
 
   const controlsRef = useRef<OrbitControlsType>(null);
   const xrayLightRef = useRef<THREE.SpotLight>(null);
@@ -271,7 +276,7 @@ export function DentalPositioningSimulator() {
       xrayLightRef.current.target.position.set(...sensorPos);
       xrayLightRef.current.target.updateMatrixWorld();
     }
-  }, [sensorPos, lightPos]);
+  }, [lightPos, lightRotX]);
 
   const resetCamera = () => {
     if (controlsRef.current) {
@@ -279,8 +284,8 @@ export function DentalPositioningSimulator() {
     }
   };
 
-  const bgColor = backgroundColor === 'white' ? '#ffffff' : '#374151';
-  const containerBg = backgroundColor === 'white' ? 'bg-white' : 'bg-gray-700';
+  const bgColor = backgroundColor === 'white' ? '#000000' : '#374151';
+  const containerBg = backgroundColor === 'white' ? 'bg-black' : 'bg-gray-700';
 
   return (
     <div className="flex flex-col lg:flex-row gap-4 h-full">
@@ -311,7 +316,7 @@ export function DentalPositioningSimulator() {
           />
 
           {/* РЕНТГЕН-СВЕТ: Узконаправленный источник света */}
-          <group position={lightPos} rotation={lightRot}>
+          <group position={lightPos} rotation={[lightRotX, 0, 0]}>
             <spotLight
               ref={xrayLightRef}
               angle={xrayLightAngle * Math.PI / 180}
@@ -331,33 +336,37 @@ export function DentalPositioningSimulator() {
 
           {/* Объекты сцены */}
           <Suspense fallback={<LoadingPlaceholder />}>
+            {/* Верхние зубы - фиксированные */}
             <TeethUpperModel
               position={teethUpperPos}
               rotation={teethUpperRot}
               showAxes={showAxes}
-              isSelected={selectedObject === 'teeth_upper'}
-              onClick={() => setSelectedObject('teeth_upper')}
+              isSelected={false}
+              onClick={() => {}}
             />
+            {/* Нижние зубы - только ротация X с кастомным центром */}
             <TeethLowerModel
               position={teethLowerPos}
-              rotation={teethLowerRot}
+              rotationX={teethLowerRotX}
+              pivot={teethLowerPivot}
               showAxes={showAxes}
               isSelected={selectedObject === 'teeth_lower'}
               onClick={() => setSelectedObject('teeth_lower')}
             />
+            {/* Датчик - только ротация Z с кастомным центром */}
             <XRaySensorModel
               position={sensorPos}
-              rotation={sensorRot}
+              rotationZ={sensorRotZ}
+              pivot={sensorPivot}
               showAxes={showAxes}
               isSelected={selectedObject === 'sensor'}
               onClick={() => setSelectedObject('sensor')}
             />
+            {/* Тубус - фиксированный, связан со светом */}
             <XRayTubusModel
               position={tubusPos}
               rotation={tubusRot}
               showAxes={showAxes}
-              isSelected={selectedObject === 'tubus'}
-              onClick={() => setSelectedObject('tubus')}
             />
           </Suspense>
         </Canvas>
@@ -407,20 +416,26 @@ export function DentalPositioningSimulator() {
       <div className="w-full lg:w-80 bg-white rounded-2xl border-2 border-gray-200 p-4 overflow-y-auto">
         <h3 className="font-bold text-xl mb-4">Настройки объектов</h3>
 
+        {/* Галочка для связки всех элементов */}
+        <div className="mb-4 p-3 bg-gray-50 rounded-xl">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={linkAllToSensor}
+              onChange={(e) => setLinkAllToSensor(e.target.checked)}
+              className="w-4 h-4"
+            />
+            <span className="text-sm font-semibold">Связать всё с датчиком</span>
+          </label>
+          <p className="text-xs text-gray-600 mt-1">
+            При включении тубус и свет двигаются вместе с датчиком
+          </p>
+        </div>
+
         {/* Выбор объекта */}
         <div className="mb-4">
           <label className="text-sm font-semibold mb-2 block">Выберите объект:</label>
-          <div className="grid grid-cols-2 gap-2 mb-2">
-            <button
-              onClick={() => setSelectedObject('teeth_upper')}
-              className={`py-2 px-3 rounded-xl text-sm font-semibold ${
-                selectedObject === 'teeth_upper'
-                  ? 'bg-green-500 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              🦷 Верхние
-            </button>
+          <div className="grid grid-cols-2 gap-2">
             <button
               onClick={() => setSelectedObject('teeth_lower')}
               className={`py-2 px-3 rounded-xl text-sm font-semibold ${
@@ -429,7 +444,7 @@ export function DentalPositioningSimulator() {
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
-              🦷 Нижние
+              Нижние зубы
             </button>
             <button
               onClick={() => setSelectedObject('sensor')}
@@ -439,235 +454,71 @@ export function DentalPositioningSimulator() {
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
-              📡 Датчик
-            </button>
-            <button
-              onClick={() => setSelectedObject('tubus')}
-              className={`py-2 px-3 rounded-xl text-sm font-semibold ${
-                selectedObject === 'tubus'
-                  ? 'bg-green-500 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              📸 Тубус
+              Датчик
             </button>
           </div>
           <button
             onClick={() => setSelectedObject('light')}
-            className={`w-full py-2 px-3 rounded-xl text-sm font-semibold ${
+            className={`w-full py-2 px-3 rounded-xl text-sm font-semibold mt-2 ${
               selectedObject === 'light'
                 ? 'bg-green-500 text-white'
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
-            💡 Рентген-свет
+            Свет + Тубус
           </button>
         </div>
 
         {/* Настройки выбранного объекта */}
-        {selectedObject === 'teeth_upper' && (
-          <div>
-            <h4 className="font-bold mb-3">🦷 Верхние зубы</h4>
-
-            <div className="mb-3">
-              <label className="text-xs font-semibold mb-1 block">Position</label>
-              <div className="grid grid-cols-3 gap-2">
-                {['X', 'Y', 'Z'].map((axis, i) => (
-                  <label key={axis} className="text-xs">
-                    {axis}:
-                    <input
-                      type="number"
-                      step="0.1"
-                      value={teethUpperPos[i]}
-                      onChange={(e) => {
-                        const newPos = [...teethUpperPos] as [number, number, number];
-                        newPos[i] = parseFloat(e.target.value) || 0;
-                        setTeethUpperPos(newPos);
-                      }}
-                      className="w-full px-2 py-1 border rounded mt-1"
-                    />
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            <div className="mb-3">
-              <label className="text-xs font-semibold mb-1 block">Rotation (радианы)</label>
-              <div className="grid grid-cols-3 gap-2">
-                {['X', 'Y', 'Z'].map((axis, i) => (
-                  <label key={axis} className="text-xs">
-                    {axis}:
-                    <input
-                      type="number"
-                      step="0.1"
-                      value={teethUpperRot[i].toFixed(2)}
-                      onChange={(e) => {
-                        const newRot = [...teethUpperRot] as [number, number, number];
-                        newRot[i] = parseFloat(e.target.value) || 0;
-                        setTeethUpperRot(newRot);
-                      }}
-                      className="w-full px-2 py-1 border rounded mt-1"
-                    />
-                  </label>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
         {selectedObject === 'teeth_lower' && (
           <div>
-            <h4 className="font-bold mb-3">🦷 Нижние зубы</h4>
+            <h4 className="font-bold mb-3">Нижние зубы</h4>
 
             <div className="mb-3">
-              <label className="text-xs font-semibold mb-1 block">Position</label>
-              <div className="grid grid-cols-3 gap-2">
-                {['X', 'Y', 'Z'].map((axis, i) => (
-                  <label key={axis} className="text-xs">
-                    {axis}:
-                    <input
-                      type="number"
-                      step="0.1"
-                      value={teethLowerPos[i]}
-                      onChange={(e) => {
-                        const newPos = [...teethLowerPos] as [number, number, number];
-                        newPos[i] = parseFloat(e.target.value) || 0;
-                        setTeethLowerPos(newPos);
-                      }}
-                      className="w-full px-2 py-1 border rounded mt-1"
-                    />
-                  </label>
-                ))}
-              </div>
+              <label className="text-xs font-semibold mb-1 block">
+                Rotation X (радианы)
+                <input
+                  type="number"
+                  step="0.1"
+                  value={teethLowerRotX.toFixed(2)}
+                  onChange={(e) => setTeethLowerRotX(parseFloat(e.target.value) || 0)}
+                  className="w-full px-2 py-1 border rounded mt-1"
+                />
+              </label>
             </div>
 
-            <div className="mb-3">
-              <label className="text-xs font-semibold mb-1 block">Rotation (радианы)</label>
-              <div className="grid grid-cols-3 gap-2">
-                {['X', 'Y', 'Z'].map((axis, i) => (
-                  <label key={axis} className="text-xs">
-                    {axis}:
-                    <input
-                      type="number"
-                      step="0.1"
-                      value={teethLowerRot[i].toFixed(2)}
-                      onChange={(e) => {
-                        const newRot = [...teethLowerRot] as [number, number, number];
-                        newRot[i] = parseFloat(e.target.value) || 0;
-                        setTeethLowerRot(newRot);
-                      }}
-                      className="w-full px-2 py-1 border rounded mt-1"
-                    />
-                  </label>
-                ))}
-              </div>
-            </div>
+            <p className="text-xs text-gray-600">
+              Центр ротации смещен к задним зубам (-1.2 по Z)
+            </p>
           </div>
         )}
 
         {selectedObject === 'sensor' && (
           <div>
-            <h4 className="font-bold mb-3">📡 Датчик</h4>
+            <h4 className="font-bold mb-3">Датчик</h4>
 
             <div className="mb-3">
-              <label className="text-xs font-semibold mb-1 block">Position</label>
-              <div className="grid grid-cols-3 gap-2">
-                {['X', 'Y', 'Z'].map((axis, i) => (
-                  <label key={axis} className="text-xs">
-                    {axis}:
-                    <input
-                      type="number"
-                      step="0.1"
-                      value={sensorPos[i]}
-                      onChange={(e) => {
-                        const newPos = [...sensorPos] as [number, number, number];
-                        newPos[i] = parseFloat(e.target.value) || 0;
-                        setSensorPos(newPos);
-                      }}
-                      className="w-full px-2 py-1 border rounded mt-1"
-                    />
-                  </label>
-                ))}
-              </div>
+              <label className="text-xs font-semibold mb-1 block">
+                Rotation Z (радианы)
+                <input
+                  type="number"
+                  step="0.1"
+                  value={sensorRotZ.toFixed(2)}
+                  onChange={(e) => setSensorRotZ(parseFloat(e.target.value) || 0)}
+                  className="w-full px-2 py-1 border rounded mt-1"
+                />
+              </label>
             </div>
 
-            <div className="mb-3">
-              <label className="text-xs font-semibold mb-1 block">Rotation (радианы)</label>
-              <div className="grid grid-cols-3 gap-2">
-                {['X', 'Y', 'Z'].map((axis, i) => (
-                  <label key={axis} className="text-xs">
-                    {axis}:
-                    <input
-                      type="number"
-                      step="0.1"
-                      value={sensorRot[i].toFixed(2)}
-                      onChange={(e) => {
-                        const newRot = [...sensorRot] as [number, number, number];
-                        newRot[i] = parseFloat(e.target.value) || 0;
-                        setSensorRot(newRot);
-                      }}
-                      className="w-full px-2 py-1 border rounded mt-1"
-                    />
-                  </label>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {selectedObject === 'tubus' && (
-          <div>
-            <h4 className="font-bold mb-3">📸 Тубус</h4>
-
-            <div className="mb-3">
-              <label className="text-xs font-semibold mb-1 block">Position</label>
-              <div className="grid grid-cols-3 gap-2">
-                {['X', 'Y', 'Z'].map((axis, i) => (
-                  <label key={axis} className="text-xs">
-                    {axis}:
-                    <input
-                      type="number"
-                      step="0.1"
-                      value={tubusPos[i]}
-                      onChange={(e) => {
-                        const newPos = [...tubusPos] as [number, number, number];
-                        newPos[i] = parseFloat(e.target.value) || 0;
-                        setTubusPos(newPos);
-                      }}
-                      className="w-full px-2 py-1 border rounded mt-1"
-                    />
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            <div className="mb-3">
-              <label className="text-xs font-semibold mb-1 block">Rotation (радианы)</label>
-              <div className="grid grid-cols-3 gap-2">
-                {['X', 'Y', 'Z'].map((axis, i) => (
-                  <label key={axis} className="text-xs">
-                    {axis}:
-                    <input
-                      type="number"
-                      step="0.1"
-                      value={tubusRot[i].toFixed(2)}
-                      onChange={(e) => {
-                        const newRot = [...tubusRot] as [number, number, number];
-                        newRot[i] = parseFloat(e.target.value) || 0;
-                        setTubusRot(newRot);
-                      }}
-                      className="w-full px-2 py-1 border rounded mt-1"
-                    />
-                  </label>
-                ))}
-              </div>
-            </div>
+            <p className="text-xs text-gray-600">
+              Центр ротации смещен к датчику (Y -0.4, Z 1)
+            </p>
           </div>
         )}
 
         {selectedObject === 'light' && (
           <div>
-            <h4 className="font-bold mb-3">💡 Рентген-свет</h4>
+            <h4 className="font-bold mb-3">Свет + Тубус</h4>
 
             <div className="mb-3">
               <label className="text-xs font-semibold mb-1 block">Position</label>
@@ -692,25 +543,29 @@ export function DentalPositioningSimulator() {
             </div>
 
             <div className="mb-3">
-              <label className="text-xs font-semibold mb-1 block">Rotation (радианы)</label>
-              <div className="grid grid-cols-3 gap-2">
-                {['X', 'Y', 'Z'].map((axis, i) => (
-                  <label key={axis} className="text-xs">
-                    {axis}:
-                    <input
-                      type="number"
-                      step="0.1"
-                      value={lightRot[i].toFixed(2)}
-                      onChange={(e) => {
-                        const newRot = [...lightRot] as [number, number, number];
-                        newRot[i] = parseFloat(e.target.value) || 0;
-                        setLightRot(newRot);
-                      }}
-                      className="w-full px-2 py-1 border rounded mt-1"
-                    />
-                  </label>
-                ))}
-              </div>
+              <label className="text-xs font-semibold mb-1 block">
+                Rotation X (радианы)
+                <input
+                  type="number"
+                  step="0.1"
+                  value={lightRotX.toFixed(2)}
+                  onChange={(e) => setLightRotX(parseFloat(e.target.value) || 0)}
+                  className="w-full px-2 py-1 border rounded mt-1"
+                />
+              </label>
+            </div>
+
+            <div className="mb-3">
+              <label className="text-xs font-semibold mb-1 block">
+                Расстояние до датчика
+                <input
+                  type="number"
+                  step="0.1"
+                  value={tubusDistance}
+                  onChange={(e) => setTubusDistance(parseFloat(e.target.value) || 0)}
+                  className="w-full px-2 py-1 border rounded mt-1"
+                />
+              </label>
             </div>
 
             <div className="mb-3">
@@ -740,7 +595,7 @@ export function DentalPositioningSimulator() {
             </div>
 
             <p className="text-xs text-gray-600">
-              Свет автоматически направлен на датчик
+              Тубус и свет связаны вместе. Свет автоматически направлен на датчик.
             </p>
           </div>
         )}
