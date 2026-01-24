@@ -1,24 +1,24 @@
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls, PerspectiveCamera, useGLTF, Html } from '@react-three/drei';
+import { OrbitControls, PerspectiveCamera, Html } from '@react-three/drei';
 import { Suspense, useState, useRef } from 'react';
 import * as React from 'react';
 import * as THREE from 'three';
 import type { OrbitControls as OrbitControlsType } from 'three-stdlib';
 
-// S3 хранилище Beget
-const S3_BASE_URL = 'https://s3.ru1.storage.beget.cloud/0f31e7f56d88-xrayhub';
+// TEMPORARY: Use placeholder until S3 access is configured
+// S3 bucket currently returns 403 Forbidden - needs public access configuration
+// To restore models, configure S3 bucket with public read access and uncomment MODEL_URLS below
 
-// URL моделей
-const MODEL_URLS = {
-  teethUpper: `${S3_BASE_URL}/teeth_upper.glb`,
-  teethLower: `${S3_BASE_URL}/teeth_lower.glb`,
-  gumsLower: `${S3_BASE_URL}/gums_lower.glb`,
-  gumsUpper: `${S3_BASE_URL}/ms_upper.glb`,
-  throat: `${S3_BASE_URL}/throat.glb`,
-  tongue: `${S3_BASE_URL}/tongue.glb`,
-  xraySensor: `${S3_BASE_URL}/xray_sensor.glb`,
-  placeholder: '/models/placeholder.glb',
-};
+// const S3_BASE_URL = 'https://s3.ru1.storage.beget.cloud/0f31e7f56d88-xrayhub';
+// const MODEL_URLS = {
+//   teethUpper: `${S3_BASE_URL}/teeth_upper.glb`,
+//   teethLower: `${S3_BASE_URL}/teeth_lower.glb`,
+//   gumsLower: `${S3_BASE_URL}/gums_lower.glb`,
+//   gumsUpper: `${S3_BASE_URL}/ms_upper.glb`,
+//   throat: `${S3_BASE_URL}/throat.glb`,
+//   tongue: `${S3_BASE_URL}/tongue.glb`,
+//   xraySensor: `${S3_BASE_URL}/xray_sensor.glb`,
+// };
 
 // Компонент загрузки (placeholder) - вращающийся
 function LoadingPlaceholder() {
@@ -65,9 +65,8 @@ function AxesHelper({ size = 1, position = [0, 0, 0] as [number, number, number]
 }
 
 
-// Универсальный компонент модели с pivot и object трансформациями
-function UniversalModel({
-  modelUrl,
+// Временный компонент-заглушка вместо моделей (пока S3 недоступен)
+function PlaceholderModel({
   pivotPosition,
   pivotRotation,
   objectPosition,
@@ -76,9 +75,9 @@ function UniversalModel({
   showAxes,
   isSelected,
   onClick,
-  label
+  label,
+  color = "#48BB78"
 }: {
-  modelUrl: string;
   pivotPosition: [number, number, number];
   pivotRotation: [number, number, number];
   objectPosition: [number, number, number];
@@ -88,41 +87,29 @@ function UniversalModel({
   isSelected: boolean;
   onClick: () => void;
   label: string;
+  color?: string;
 }) {
-  const { scene } = useGLTF(modelUrl);
-  const clonedScene = scene.clone(true);
-
-  // Настройка теней и прозрачности
-  React.useEffect(() => {
-    clonedScene.traverse((child) => {
-      if ((child as THREE.Mesh).isMesh) {
-        const mesh = child as THREE.Mesh;
-        mesh.castShadow = true;
-        mesh.receiveShadow = true;
-
-        // Добавляем прозрачность если нужно
-        if (opacity < 1 && mesh.material) {
-          const material = mesh.material as THREE.MeshStandardMaterial;
-          material.transparent = true;
-          material.opacity = opacity;
-        }
-      }
-    });
-  }, [clonedScene, opacity]);
-
   return (
     <group onClick={onClick}>
       {/* Pivot (оси вращения) */}
       <group position={pivotPosition} rotation={pivotRotation}>
         {/* Object (сам объект) */}
         <group position={objectPosition} rotation={objectRotation}>
-          <primitive object={clonedScene} />
+          <mesh castShadow receiveShadow>
+            <boxGeometry args={[0.3, 0.3, 0.3]} />
+            <meshStandardMaterial
+              color={color}
+              transparent={opacity < 1}
+              opacity={opacity}
+              wireframe
+            />
+          </mesh>
         </group>
         {/* Оси в центре pivot */}
         {showAxes && <AxesHelper size={0.5} position={[0, 0, 0]} />}
       </group>
       {isSelected && (
-        <Html position={[pivotPosition[0], pivotPosition[1] + 1.5, pivotPosition[2]]} center>
+        <Html position={[pivotPosition[0], pivotPosition[1] + 0.5, pivotPosition[2]]} center>
           <div className="bg-green-500 text-white px-2 py-1 rounded text-xs font-bold">
             {label}
           </div>
@@ -307,11 +294,10 @@ export function DentalPositioningSimulator() {
             <LightVisualization lightAngle={xrayLightAngle} showAxes={showAxes} />
           </group>
 
-          {/* Объекты сцены */}
+          {/* Объекты сцены - временно используем заглушки */}
           <Suspense fallback={<LoadingPlaceholder />}>
             {/* Верхние зубы */}
-            <UniversalModel
-              modelUrl={MODEL_URLS.teethUpper}
+            <PlaceholderModel
               pivotPosition={teethUpperPivotPos}
               pivotRotation={teethUpperPivotRot}
               objectPosition={teethUpperObjPos}
@@ -321,11 +307,11 @@ export function DentalPositioningSimulator() {
               isSelected={selectedObject === 'teeth_upper'}
               onClick={() => setSelectedObject('teeth_upper')}
               label="Верхние зубы"
+              color="#ffffff"
             />
 
             {/* Нижние зубы */}
-            <UniversalModel
-              modelUrl={MODEL_URLS.teethLower}
+            <PlaceholderModel
               pivotPosition={teethLowerPivotPos}
               pivotRotation={teethLowerPivotRot}
               objectPosition={teethLowerObjPos}
@@ -335,14 +321,14 @@ export function DentalPositioningSimulator() {
               isSelected={selectedObject === 'teeth_lower'}
               onClick={() => setSelectedObject('teeth_lower')}
               label="Нижние зубы"
+              color="#f0f0f0"
             />
 
             {/* Мягкие ткани и гортань (опционально) */}
             {showSoftTissues && (
               <>
                 {/* Верхние мягкие ткани */}
-                <UniversalModel
-                  modelUrl={MODEL_URLS.gumsUpper}
+                <PlaceholderModel
                   pivotPosition={gumsUpperPivotPos}
                   pivotRotation={gumsUpperPivotRot}
                   objectPosition={gumsUpperObjPos}
@@ -351,11 +337,11 @@ export function DentalPositioningSimulator() {
                   isSelected={selectedObject === 'gums_upper'}
                   onClick={() => setSelectedObject('gums_upper')}
                   label="Дёсны верхние"
+                  color="#ff9999"
                 />
 
                 {/* Нижние мягкие ткани */}
-                <UniversalModel
-                  modelUrl={MODEL_URLS.gumsLower}
+                <PlaceholderModel
                   pivotPosition={gumsLowerPivotPos}
                   pivotRotation={gumsLowerPivotRot}
                   objectPosition={gumsLowerObjPos}
@@ -364,11 +350,11 @@ export function DentalPositioningSimulator() {
                   isSelected={selectedObject === 'gums_lower'}
                   onClick={() => setSelectedObject('gums_lower')}
                   label="Дёсны нижние"
+                  color="#ff7777"
                 />
 
                 {/* Гортань */}
-                <UniversalModel
-                  modelUrl={MODEL_URLS.throat}
+                <PlaceholderModel
                   pivotPosition={throatPivotPos}
                   pivotRotation={throatPivotRot}
                   objectPosition={throatObjPos}
@@ -377,11 +363,11 @@ export function DentalPositioningSimulator() {
                   isSelected={selectedObject === 'throat'}
                   onClick={() => setSelectedObject('throat')}
                   label="Гортань"
+                  color="#ffaaaa"
                 />
 
                 {/* Язык */}
-                <UniversalModel
-                  modelUrl={MODEL_URLS.tongue}
+                <PlaceholderModel
                   pivotPosition={tonguePivotPos}
                   pivotRotation={tonguePivotRot}
                   objectPosition={tongueObjPos}
@@ -390,13 +376,13 @@ export function DentalPositioningSimulator() {
                   isSelected={selectedObject === 'tongue'}
                   onClick={() => setSelectedObject('tongue')}
                   label="Язык"
+                  color="#ff6666"
                 />
               </>
             )}
 
             {/* Датчик */}
-            <UniversalModel
-              modelUrl={MODEL_URLS.xraySensor}
+            <PlaceholderModel
               pivotPosition={sensorPivotPos}
               pivotRotation={sensorPivotRot}
               objectPosition={sensorObjPos}
@@ -405,6 +391,7 @@ export function DentalPositioningSimulator() {
               isSelected={selectedObject === 'sensor'}
               onClick={() => setSelectedObject('sensor')}
               label="Датчик"
+              color="#4a9eff"
             />
           </Suspense>
         </Canvas>
@@ -455,6 +442,14 @@ export function DentalPositioningSimulator() {
               {showAxes ? 'Скрыть оси' : 'Показать оси'}
             </button>
           </div>
+        </div>
+
+        {/* Информация о заглушке */}
+        <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-xl">
+          <p className="text-xs text-yellow-800">
+            <strong>Временно:</strong> Используются простые геометрические заглушки вместо 3D моделей.
+            Для загрузки реальных моделей требуется настроить публичный доступ к S3 хранилищу.
+          </p>
         </div>
 
         {/* Глобальные настройки */}
