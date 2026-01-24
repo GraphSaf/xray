@@ -5,8 +5,8 @@ import * as React from 'react';
 import * as THREE from 'three';
 import type { OrbitControls as OrbitControlsType } from 'three-stdlib';
 
-// S3 хранилище Beget - используем bucket-style URL
-const S3_BASE_URL = 'https://0f31e7f56d88-xrayhub.s3.ru1.storage.beget.cloud';
+// S3 хранилище Beget
+const S3_BASE_URL = 'https://s3.ru1.storage.beget.cloud/0f31e7f56d88-xrayhub';
 
 // URL моделей
 const MODEL_URLS = {
