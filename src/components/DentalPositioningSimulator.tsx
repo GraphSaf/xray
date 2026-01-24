@@ -262,7 +262,7 @@ export function DentalPositioningSimulator() {
   return (
     <div className="flex flex-col lg:flex-row gap-4 h-full">
       {/* 3D Canvas */}
-      <div className={`h-[400px] lg:h-auto lg:flex-1 relative ${containerBg} rounded-lg overflow-hidden border-2 border-gray-200`}>
+      <div className={`h-[400px] lg:h-full lg:flex-1 relative ${containerBg} rounded-lg overflow-hidden border-2 border-gray-200`}>
         <Canvas shadows>
           <color attach="background" args={[bgColor]} />
           <PerspectiveCamera makeDefault position={[3, 2, 3]} fov={60} />
