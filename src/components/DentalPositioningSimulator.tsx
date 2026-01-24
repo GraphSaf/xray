@@ -1,91 +1,156 @@
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls, PerspectiveCamera, Box, Cone, Cylinder, useGLTF } from '@react-three/drei';
+import { OrbitControls, PerspectiveCamera, useGLTF, Html } from '@react-three/drei';
 import { Suspense, useState, useRef } from 'react';
 import * as React from 'react';
+import * as THREE from 'three';
 import type { OrbitControls as OrbitControlsType } from 'three-stdlib';
 
-// URL модели зубов в S3 хранилище Beget
-const TEETH_MODEL_URL = 'https://s3.ru1.storage.beget.cloud/0f31e7f56d88-xrayhub/teeth.glb';
+// S3 хранилище Beget
+const S3_BASE_URL = 'https://s3.ru1.storage.beget.cloud/0f31e7f56d88-xrayhub';
 
-// Компонент 3D модели зубов из GLB файла
-function TeethModel({ rotation }: { rotation: number }) {
-  const { scene } = useGLTF(TEETH_MODEL_URL);
-  const clonedScene = scene.clone(true);
+// URL моделей
+const MODEL_URLS = {
+  teethUpper: `${S3_BASE_URL}/teeth_upper.glb`,
+  teethLower: `${S3_BASE_URL}/teeth_lower.glb`,
+  xraySensor: `${S3_BASE_URL}/xray_sensor.glb`,
+  xrayTubus: `${S3_BASE_URL}/xray_tubus.glb`,
+  placeholder: '/models/placeholder.glb', // Локально
+};
 
-  console.log('[TeethModel] Model loaded successfully from S3');
-  console.log('[TeethModel] Scene:', clonedScene);
-
-  return (
-    <primitive
-      object={clonedScene}
-      position={[0, 0, 0]}
-      rotation={[0, rotation, 0]}
-      scale={1}
-    />
-  );
+// Компонент загрузки (placeholder)
+function LoadingPlaceholder() {
+  // Временно используем простой куб, пока не загрузим placeholder.glb
+  // TODO: Заменить на useGLTF(MODEL_URLS.placeholder) когда файл будет доступен
+  return null; // Или можно использовать <Box> если нужен визуальный индикатор
 }
 
-// Компонент загрузки (желтый куб)
-function LoadingCube() {
-  return (
-    <Box args={[1, 1, 1]} position={[0, 0, 0]}>
-      <meshStandardMaterial color="#ffff00" emissive="#ffff00" emissiveIntensity={0.5} />
-    </Box>
-  );
+// Компонент для отображения осей координат
+function AxesHelper({ size = 1, position = [0, 0, 0] as [number, number, number] }) {
+  const axesRef = useRef<THREE.AxesHelper>(null);
+
+  React.useEffect(() => {
+    if (axesRef.current) {
+      axesRef.current.position.set(...position);
+    }
+  }, [position]);
+
+  return <axesHelper ref={axesRef} args={[size]} />;
 }
 
-// Компонент рентген-аппарата
-function XRayMachine({
-  position = [2, 0, 0] as [number, number, number],
-  rotation = [0, -Math.PI / 2, 0] as [number, number, number]
+// Компонент для отображения информации об объекте
+function ObjectInfo({
+  name,
+  position,
+  rotation
 }: {
-  position?: [number, number, number];
-  rotation?: [number, number, number];
+  name: string;
+  position: [number, number, number];
+  rotation: number;
 }) {
   return (
-    <group position={position} rotation={rotation}>
-      {/* Корпус аппарата */}
-      <Box args={[0.4, 0.4, 0.3]} position={[0, 0, 0]}>
-        <meshStandardMaterial color="#2d3748" metalness={0.8} roughness={0.2} />
-      </Box>
+    <Html position={[position[0], position[1] + 1, position[2]]} center>
+      <div className="bg-black/80 text-white px-3 py-2 rounded-lg text-xs font-mono whitespace-nowrap pointer-events-none">
+        <div className="font-bold mb-1">{name}</div>
+        <div>pos: [{position[0].toFixed(2)}, {position[1].toFixed(2)}, {position[2].toFixed(2)}]</div>
+        <div>rot: {(rotation * 180 / Math.PI).toFixed(1)}°</div>
+      </div>
+    </Html>
+  );
+}
 
-      {/* Тубус (коллиматор) */}
-      <Cylinder args={[0.15, 0.12, 1, 16]} position={[0, 0, 0.65]} rotation={[Math.PI / 2, 0, 0]}>
-        <meshStandardMaterial color="#4a5568" metalness={0.6} roughness={0.3} />
-      </Cylinder>
+// Компонент верхних зубов
+function TeethUpperModel({
+  position,
+  rotation,
+  showAxes
+}: {
+  position: [number, number, number];
+  rotation: number;
+  showAxes: boolean;
+}) {
+  const { scene } = useGLTF(MODEL_URLS.teethUpper);
 
-      {/* Конус тубуса */}
-      <Cone args={[0.12, 0.15, 16]} position={[0, 0, 1.15]} rotation={[Math.PI / 2, 0, 0]}>
-        <meshStandardMaterial color="#718096" metalness={0.5} roughness={0.4} />
-      </Cone>
-
-      {/* Индикатор луча */}
-      <Cone args={[0.08, 0.3, 16]} position={[0, 0, 1.3]} rotation={[Math.PI / 2, 0, 0]}>
-        <meshStandardMaterial color="#48bb78" emissive="#48bb78" emissiveIntensity={0.5} transparent opacity={0.6} />
-      </Cone>
+  return (
+    <group>
+      <primitive
+        object={scene.clone(true)}
+        position={position}
+        rotation={[0, rotation, 0]}
+      />
+      {showAxes && <AxesHelper size={0.5} position={position} />}
+      {showAxes && <ObjectInfo name="Teeth Upper" position={position} rotation={rotation} />}
     </group>
   );
 }
 
-// Компонент пленки/сенсора
-function FilmSensor({
-  position = [0, 0, 0.5] as [number, number, number],
-  rotation = 0
+// Компонент нижних зубов
+function TeethLowerModel({
+  position,
+  rotation,
+  showAxes
 }: {
-  position?: [number, number, number];
-  rotation?: number;
+  position: [number, number, number];
+  rotation: number;
+  showAxes: boolean;
 }) {
-  return (
-    <group position={position} rotation={[0, rotation, 0]}>
-      {/* Держатель */}
-      <Box args={[0.5, 0.6, 0.02]} position={[0, 0, 0]}>
-        <meshStandardMaterial color="#3182ce" metalness={0.3} roughness={0.5} />
-      </Box>
+  const { scene } = useGLTF(MODEL_URLS.teethLower);
 
-      {/* Сенсор */}
-      <Box args={[0.35, 0.45, 0.01]} position={[0, 0, 0.015]}>
-        <meshStandardMaterial color="#90cdf4" metalness={0.1} roughness={0.8} />
-      </Box>
+  return (
+    <group>
+      <primitive
+        object={scene.clone(true)}
+        position={position}
+        rotation={[0, rotation, 0]}
+      />
+      {showAxes && <AxesHelper size={0.5} position={position} />}
+      {showAxes && <ObjectInfo name="Teeth Lower" position={position} rotation={rotation} />}
+    </group>
+  );
+}
+
+// Компонент датчика
+function XRaySensorModel({
+  position,
+  rotation,
+  showAxes
+}: {
+  position: [number, number, number];
+  rotation: number;
+  showAxes: boolean;
+}) {
+  const { scene } = useGLTF(MODEL_URLS.xraySensor);
+
+  return (
+    <group>
+      <primitive
+        object={scene.clone(true)}
+        position={position}
+        rotation={[0, rotation, 0]}
+      />
+      {showAxes && <AxesHelper size={0.3} position={position} />}
+      {showAxes && <ObjectInfo name="XRay Sensor" position={position} rotation={rotation} />}
+    </group>
+  );
+}
+
+// Компонент тубуса
+function XRayTubusModel({
+  position,
+  showAxes
+}: {
+  position: [number, number, number];
+  showAxes: boolean;
+}) {
+  const { scene } = useGLTF(MODEL_URLS.xrayTubus);
+
+  return (
+    <group>
+      <primitive
+        object={scene.clone(true)}
+        position={position}
+      />
+      {showAxes && <AxesHelper size={0.5} position={position} />}
+      {showAxes && <ObjectInfo name="XRay Tubus" position={position} rotation={0} />}
     </group>
   );
 }
@@ -95,6 +160,14 @@ export function DentalPositioningSimulator() {
   const [backgroundColor, setBackgroundColor] = useState<'white' | 'dark'>('white');
   const [teethRotation, setTeethRotation] = useState(0);
   const [sensorRotation, setSensorRotation] = useState(0);
+  const [showAxes, setShowAxes] = useState(true);
+  const [showControls, setShowControls] = useState(false);
+
+  // Позиции объектов (редактируемые)
+  const [teethPos, setTeethPos] = useState<[number, number, number]>([0, 0, 0]);
+  const [sensorPos, setSensorPos] = useState<[number, number, number]>([0, 0, 0.5]);
+  const [tubusPos, setTubusPos] = useState<[number, number, number]>([2.5, 0, 0]);
+
   const controlsRef = useRef<OrbitControlsType>(null);
 
   const resetCamera = () => {
@@ -170,11 +243,12 @@ export function DentalPositioningSimulator() {
         />
 
         {/* Объекты сцены */}
-        <Suspense fallback={<LoadingCube />}>
-          <TeethModel rotation={teethRotation} />
+        <Suspense fallback={<LoadingPlaceholder />}>
+          <TeethUpperModel position={teethPos} rotation={teethRotation} showAxes={showAxes} />
+          <TeethLowerModel position={teethPos} rotation={teethRotation} showAxes={showAxes} />
+          <XRaySensorModel position={sensorPos} rotation={sensorRotation} showAxes={showAxes} />
+          <XRayTubusModel position={tubusPos} showAxes={showAxes} />
         </Suspense>
-        <XRayMachine position={[2.5, 0, 0]} />
-        <FilmSensor position={[0, 0, 0.5]} rotation={sensorRotation} />
       </Canvas>
 
       {/* Панель управления */}
@@ -231,7 +305,171 @@ export function DentalPositioningSimulator() {
             →
           </button>
         </div>
+
+        {/* Кнопка показа осей */}
+        <button
+          onClick={() => setShowAxes(!showAxes)}
+          className={`px-3 py-2 font-semibold rounded-xl transition-colors shadow-lg ${
+            showAxes
+              ? 'bg-black text-white'
+              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+          }`}
+          title="Показать/скрыть оси"
+        >
+          📐 Оси
+        </button>
+
+        {/* Кнопка настроек */}
+        <button
+          onClick={() => setShowControls(!showControls)}
+          className={`px-3 py-2 font-semibold rounded-xl transition-colors shadow-lg ${
+            showControls
+              ? 'bg-black text-white'
+              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+          }`}
+          title="Открыть настройки позиций"
+        >
+          ⚙️
+        </button>
       </div>
+
+      {/* Панель настроек позиций */}
+      {showControls && (
+        <div className="absolute bottom-4 left-4 right-4 bg-white/95 backdrop-blur-sm rounded-2xl p-4 shadow-2xl max-h-[60vh] overflow-y-auto">
+          <h3 className="font-bold text-lg mb-4">Настройки позиционирования</h3>
+
+          {/* Зубы */}
+          <div className="mb-4 pb-4 border-b border-gray-200">
+            <h4 className="font-semibold mb-2">🦷 Зубы (Upper + Lower)</h4>
+            <div className="grid grid-cols-3 gap-2 mb-2">
+              <label className="text-sm">
+                X:
+                <input
+                  type="number"
+                  step="0.1"
+                  value={teethPos[0]}
+                  onChange={(e) => setTeethPos([parseFloat(e.target.value), teethPos[1], teethPos[2]])}
+                  className="w-full px-2 py-1 border rounded text-xs"
+                />
+              </label>
+              <label className="text-sm">
+                Y:
+                <input
+                  type="number"
+                  step="0.1"
+                  value={teethPos[1]}
+                  onChange={(e) => setTeethPos([teethPos[0], parseFloat(e.target.value), teethPos[2]])}
+                  className="w-full px-2 py-1 border rounded text-xs"
+                />
+              </label>
+              <label className="text-sm">
+                Z:
+                <input
+                  type="number"
+                  step="0.1"
+                  value={teethPos[2]}
+                  onChange={(e) => setTeethPos([teethPos[0], teethPos[1], parseFloat(e.target.value)])}
+                  className="w-full px-2 py-1 border rounded text-xs"
+                />
+              </label>
+            </div>
+            <label className="text-sm">
+              Rotation (°):
+              <input
+                type="number"
+                step="15"
+                value={(teethRotation * 180 / Math.PI).toFixed(0)}
+                onChange={(e) => setTeethRotation(parseFloat(e.target.value) * Math.PI / 180)}
+                className="w-full px-2 py-1 border rounded text-xs"
+              />
+            </label>
+          </div>
+
+          {/* Сенсор */}
+          <div className="mb-4 pb-4 border-b border-gray-200">
+            <h4 className="font-semibold mb-2">📡 Датчик (Sensor)</h4>
+            <div className="grid grid-cols-3 gap-2 mb-2">
+              <label className="text-sm">
+                X:
+                <input
+                  type="number"
+                  step="0.1"
+                  value={sensorPos[0]}
+                  onChange={(e) => setSensorPos([parseFloat(e.target.value), sensorPos[1], sensorPos[2]])}
+                  className="w-full px-2 py-1 border rounded text-xs"
+                />
+              </label>
+              <label className="text-sm">
+                Y:
+                <input
+                  type="number"
+                  step="0.1"
+                  value={sensorPos[1]}
+                  onChange={(e) => setSensorPos([sensorPos[0], parseFloat(e.target.value), sensorPos[2]])}
+                  className="w-full px-2 py-1 border rounded text-xs"
+                />
+              </label>
+              <label className="text-sm">
+                Z:
+                <input
+                  type="number"
+                  step="0.1"
+                  value={sensorPos[2]}
+                  onChange={(e) => setSensorPos([sensorPos[0], sensorPos[1], parseFloat(e.target.value)])}
+                  className="w-full px-2 py-1 border rounded text-xs"
+                />
+              </label>
+            </div>
+            <label className="text-sm">
+              Rotation (°):
+              <input
+                type="number"
+                step="15"
+                value={(sensorRotation * 180 / Math.PI).toFixed(0)}
+                onChange={(e) => setSensorRotation(parseFloat(e.target.value) * Math.PI / 180)}
+                className="w-full px-2 py-1 border rounded text-xs"
+              />
+            </label>
+          </div>
+
+          {/* Тубус */}
+          <div className="mb-4">
+            <h4 className="font-semibold mb-2">📸 Тубус (Tubus)</h4>
+            <div className="grid grid-cols-3 gap-2">
+              <label className="text-sm">
+                X:
+                <input
+                  type="number"
+                  step="0.1"
+                  value={tubusPos[0]}
+                  onChange={(e) => setTubusPos([parseFloat(e.target.value), tubusPos[1], tubusPos[2]])}
+                  className="w-full px-2 py-1 border rounded text-xs"
+                />
+              </label>
+              <label className="text-sm">
+                Y:
+                <input
+                  type="number"
+                  step="0.1"
+                  value={tubusPos[1]}
+                  onChange={(e) => setTubusPos([tubusPos[0], parseFloat(e.target.value), tubusPos[2]])}
+                  className="w-full px-2 py-1 border rounded text-xs"
+                />
+              </label>
+              <label className="text-sm">
+                Z:
+                <input
+                  type="number"
+                  step="0.1"
+                  value={tubusPos[2]}
+                  onChange={(e) => setTubusPos([tubusPos[0], tubusPos[1], parseFloat(e.target.value)])}
+                  className="w-full px-2 py-1 border rounded text-xs"
+                />
+              </label>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
