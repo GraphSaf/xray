@@ -13,7 +13,7 @@ const MODEL_URLS = {
   teethUpper: `${S3_BASE_URL}/teeth_upper.glb`,
   teethLower: `${S3_BASE_URL}/teeth_lower.glb`,
   gumsLower: `${S3_BASE_URL}/gums_lower.glb`,
-  gumsUpper: `${S3_BASE_URL}/ms_upper.glb`,
+  gumsUpper: `${S3_BASE_URL}/gums_upper.glb`,
   throat: `${S3_BASE_URL}/throat.glb`,
   tongue: `${S3_BASE_URL}/tongue.glb`,
   xraySensor: `${S3_BASE_URL}/xray_sensor.glb`,
