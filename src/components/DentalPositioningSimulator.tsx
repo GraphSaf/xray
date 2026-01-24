@@ -244,9 +244,11 @@ export function DentalPositioningSimulator() {
   const [sensorObjPos, setSensorObjPos] = useState<[number, number, number]>([0, 0, 0]);
   const [sensorObjRot, setSensorObjRot] = useState<[number, number, number]>([0, 0, 0]);
 
-  // Свет
-  const [lightPos, setLightPos] = useState<[number, number, number]>([0, 0, 0]);
-  const [lightRot, setLightRot] = useState<[number, number, number]>([0, 0, 0]);
+  // Свет - система Pivot/Object как у остальных объектов
+  const [lightPivotPos, setLightPivotPos] = useState<[number, number, number]>([0, 0, 0]);
+  const [lightPivotRot, setLightPivotRot] = useState<[number, number, number]>([0, 0, 0]);
+  const [lightObjPos, setLightObjPos] = useState<[number, number, number]>([0, 0, 0]);
+  const [lightObjRot, setLightObjRot] = useState<[number, number, number]>([0, 0, 0]);
   const [xrayLightIntensity, setXrayLightIntensity] = useState(220);
   const [xrayLightAngle, setXrayLightAngle] = useState(9);
   const [lightDistance, setLightDistance] = useState(10);
@@ -269,7 +271,7 @@ export function DentalPositioningSimulator() {
       xrayLightRef.current.target.position.set(...sensorPivotPos);
       xrayLightRef.current.target.updateMatrixWorld();
     }
-  }, [lightPos, lightRot, sensorPivotPos]);
+  }, [lightPivotPos, lightPivotRot, lightObjPos, lightObjRot, sensorPivotPos]);
 
   const resetCamera = () => {
     if (controlsRef.current) {
@@ -308,24 +310,28 @@ export function DentalPositioningSimulator() {
             intensity={1}
           />
 
-          {/* РЕНТГЕН-СВЕТ */}
-          <group position={lightPos} rotation={lightRot}>
-            <spotLight
-              ref={xrayLightRef}
-              angle={xrayLightAngle * Math.PI / 180}
-              penumbra={lightPenumbra}
-              intensity={xrayLightIntensity}
-              color="#E5FFE5"
-              distance={lightDistance}
-              decay={lightDecay}
-              castShadow
-              shadow-mapSize={[4096, 4096]}
-              shadow-bias={-0.00001}
-              shadow-camera-near={0.1}
-              shadow-camera-far={20}
-            />
-            {/* Визуализация света - только вектор */}
-            <LightVisualization showAxes={showAxes} />
+          {/* РЕНТГЕН-СВЕТ - Pivot/Object система */}
+          <group position={lightPivotPos} rotation={lightPivotRot}>
+            <group position={lightObjPos} rotation={lightObjRot}>
+              <spotLight
+                ref={xrayLightRef}
+                angle={xrayLightAngle * Math.PI / 180}
+                penumbra={lightPenumbra}
+                intensity={xrayLightIntensity}
+                color="#E5FFE5"
+                distance={lightDistance}
+                decay={lightDecay}
+                castShadow
+                shadow-mapSize={[4096, 4096]}
+                shadow-bias={-0.00001}
+                shadow-camera-near={0.1}
+                shadow-camera-far={20}
+              />
+              {/* Визуализация света - только вектор */}
+              <LightVisualization showAxes={false} />
+            </group>
+            {/* Оси в центре pivot */}
+            {showAxes && <AxesHelper size={0.5} position={[0, 0, 0]} />}
           </group>
 
           {/* Объекты сцены */}
@@ -564,8 +570,8 @@ export function DentalPositioningSimulator() {
             </div>
             <div>
               <div className="font-semibold">Свет:</div>
-              <div>Pos: [{lightPos.map(v => v.toFixed(2)).join(', ')}]</div>
-              <div>Rot: [{lightRot.map(v => v.toFixed(2)).join(', ')}]</div>
+              <div>P: [{lightPivotPos.map(v => v.toFixed(2)).join(', ')}]</div>
+              <div>O: [{lightObjPos.map(v => v.toFixed(2)).join(', ')}]</div>
             </div>
           </div>
         </div>
@@ -910,19 +916,20 @@ export function DentalPositioningSimulator() {
           <div>
             <h4 className="font-bold mb-3">Свет</h4>
 
-            <div className="mb-3">
-              <label className="text-xs font-semibold mb-1 block">Position</label>
+            {/* Pivot Position */}
+            <div className="mb-3 p-2 bg-blue-50 rounded">
+              <label className="text-xs font-bold mb-1 block">Pivot Position</label>
               <div className="grid grid-cols-3 gap-1">
                 {['X', 'Y', 'Z'].map((axis, i) => (
                   <input
                     key={axis}
                     type="number"
                     step="0.1"
-                    value={lightPos[i]}
+                    value={lightPivotPos[i]}
                     onChange={(e) => {
-                      const newPos = [...lightPos] as [number, number, number];
+                      const newPos = [...lightPivotPos] as [number, number, number];
                       newPos[i] = parseFloat(e.target.value) || 0;
-                      setLightPos(newPos);
+                      setLightPivotPos(newPos);
                     }}
                     className="w-full px-1 py-1 border rounded text-xs"
                     placeholder={axis}
@@ -931,19 +938,64 @@ export function DentalPositioningSimulator() {
               </div>
             </div>
 
-            <div className="mb-3">
-              <label className="text-xs font-semibold mb-1 block">Rotation</label>
+            {/* Pivot Rotation */}
+            <div className="mb-3 p-2 bg-blue-50 rounded">
+              <label className="text-xs font-bold mb-1 block">Pivot Rotation</label>
               <div className="grid grid-cols-3 gap-1">
                 {['X', 'Y', 'Z'].map((axis, i) => (
                   <input
                     key={axis}
                     type="number"
                     step="0.1"
-                    value={lightRot[i].toFixed(2)}
+                    value={lightPivotRot[i].toFixed(2)}
                     onChange={(e) => {
-                      const newRot = [...lightRot] as [number, number, number];
+                      const newRot = [...lightPivotRot] as [number, number, number];
                       newRot[i] = parseFloat(e.target.value) || 0;
-                      setLightRot(newRot);
+                      setLightPivotRot(newRot);
+                    }}
+                    className="w-full px-1 py-1 border rounded text-xs"
+                    placeholder={axis}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Object Position */}
+            <div className="mb-3 p-2 bg-green-50 rounded">
+              <label className="text-xs font-bold mb-1 block">Object Position</label>
+              <div className="grid grid-cols-3 gap-1">
+                {['X', 'Y', 'Z'].map((axis, i) => (
+                  <input
+                    key={axis}
+                    type="number"
+                    step="0.1"
+                    value={lightObjPos[i]}
+                    onChange={(e) => {
+                      const newPos = [...lightObjPos] as [number, number, number];
+                      newPos[i] = parseFloat(e.target.value) || 0;
+                      setLightObjPos(newPos);
+                    }}
+                    className="w-full px-1 py-1 border rounded text-xs"
+                    placeholder={axis}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Object Rotation */}
+            <div className="mb-3 p-2 bg-green-50 rounded">
+              <label className="text-xs font-bold mb-1 block">Object Rotation</label>
+              <div className="grid grid-cols-3 gap-1">
+                {['X', 'Y', 'Z'].map((axis, i) => (
+                  <input
+                    key={axis}
+                    type="number"
+                    step="0.1"
+                    value={lightObjRot[i].toFixed(2)}
+                    onChange={(e) => {
+                      const newRot = [...lightObjRot] as [number, number, number];
+                      newRot[i] = parseFloat(e.target.value) || 0;
+                      setLightObjRot(newRot);
                     }}
                     className="w-full px-1 py-1 border rounded text-xs"
                     placeholder={axis}
