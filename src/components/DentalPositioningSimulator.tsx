@@ -174,17 +174,17 @@ function LightVisualization({
 
   return (
     <group>
-      {/* Вектор направления (стрелка вдоль -Z) */}
-      <arrowHelper
-        args={[
-          new THREE.Vector3(0, 0, -1), // направление вдоль -Z (вниз)
-          new THREE.Vector3(0, 0, 0), // начало в (0,0,0)
-          arrowLength, // длина стрелки
-          0xff0000, // красный цвет для видимости
-          0.3, // длина головки
-          0.2 // ширина головки
-        ]}
-      />
+      {/* Светопропускаемый шар-индикатор для источника света */}
+      <mesh position={[0, 0, 0]}>
+        <sphereGeometry args={[0.15, 16, 16]} />
+        <meshStandardMaterial
+          color="#ffff00"
+          emissive="#ffff00"
+          emissiveIntensity={0.8}
+          transparent
+          opacity={0.6}
+        />
+      </mesh>
 
       {/* Оси координат для отладки */}
       {showAxes && <AxesHelper size={0.5} position={[0, 0, 0]} />}
@@ -209,10 +209,10 @@ export function DentalPositioningSimulator() {
   const [teethUpperObjRot, setTeethUpperObjRot] = useState<[number, number, number]>([0, 0, 0]);
 
   // Нижние зубы
-  const [teethLowerPivotPos, setTeethLowerPivotPos] = useState<[number, number, number]>([0, 0, 0]);
+  const [teethLowerPivotPos, setTeethLowerPivotPos] = useState<[number, number, number]>([0.00, 0.00, 0.00]);
   const [teethLowerPivotRot, setTeethLowerPivotRot] = useState<[number, number, number]>([0, 0, 0]);
-  const [teethLowerObjPos, setTeethLowerObjPos] = useState<[number, number, number]>([0, 0, 0]);
-  const [teethLowerObjRot, setTeethLowerObjRot] = useState<[number, number, number]>([0, 0, 0]);
+  const [teethLowerObjPos, setTeethLowerObjPos] = useState<[number, number, number]>([0.00, -0.80, -0.20]);
+  const [teethLowerObjRot, setTeethLowerObjRot] = useState<[number, number, number]>([0.20, 0.00, 0.00]);
 
   // Верхние мягкие ткани
   const [gumsUpperPivotPos, setGumsUpperPivotPos] = useState<[number, number, number]>([0, 0, 0]);
@@ -239,10 +239,10 @@ export function DentalPositioningSimulator() {
   const [tongueObjRot, setTongueObjRot] = useState<[number, number, number]>([0, 0, 0]);
 
   // Датчик
-  const [sensorPivotPos, setSensorPivotPos] = useState<[number, number, number]>([0, 0, 0]);
+  const [sensorPivotPos, setSensorPivotPos] = useState<[number, number, number]>([0.00, 0.00, 0.90]);
   const [sensorPivotRot, setSensorPivotRot] = useState<[number, number, number]>([0, 0, 0]);
-  const [sensorObjPos, setSensorObjPos] = useState<[number, number, number]>([0, 0, 0]);
-  const [sensorObjRot, setSensorObjRot] = useState<[number, number, number]>([0, 0, 0]);
+  const [sensorObjPos, setSensorObjPos] = useState<[number, number, number]>([0.00, 0.40, -3.30]);
+  const [sensorObjRot, setSensorObjRot] = useState<[number, number, number]>([-0.82, 0.00, 0.00]);
 
   // Свет - система Pivot/Object как у остальных объектов
   const [lightPivotPos, setLightPivotPos] = useState<[number, number, number]>([0, 0, 0]);
