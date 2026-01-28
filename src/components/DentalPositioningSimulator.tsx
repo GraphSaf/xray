@@ -218,16 +218,16 @@ export function DentalPositioningSimulator() {
   const [gumsUpperObjRot, setGumsUpperObjRot] = useState<[number, number, number]>([0, 0, 0]);
 
   // Нижние мягкие ткани
-  const [gumsLowerPivotPos, setGumsLowerPivotPos] = useState<[number, number, number]>([0, 0, 0]);
+  const [gumsLowerPivotPos, setGumsLowerPivotPos] = useState<[number, number, number]>([0.00, 0.00, 0.00]);
   const [gumsLowerPivotRot, setGumsLowerPivotRot] = useState<[number, number, number]>([0, 0, 0]);
-  const [gumsLowerObjPos, setGumsLowerObjPos] = useState<[number, number, number]>([0, 0, 0]);
-  const [gumsLowerObjRot, setGumsLowerObjRot] = useState<[number, number, number]>([0, 0, 0]);
+  const [gumsLowerObjPos, setGumsLowerObjPos] = useState<[number, number, number]>([0.00, -0.90, -0.30]);
+  const [gumsLowerObjRot, setGumsLowerObjRot] = useState<[number, number, number]>([0.34, 0.00, -0.00]);
 
   // Гортань
-  const [throatPivotPos, setThroatPivotPos] = useState<[number, number, number]>([0, 0, 0]);
+  const [throatPivotPos, setThroatPivotPos] = useState<[number, number, number]>([0.00, 0.00, 0.00]);
   const [throatPivotRot, setThroatPivotRot] = useState<[number, number, number]>([0, 0, 0]);
-  const [throatObjPos, setThroatObjPos] = useState<[number, number, number]>([0, 0, 0]);
-  const [throatObjRot, setThroatObjRot] = useState<[number, number, number]>([0, 0, 0]);
+  const [throatObjPos, setThroatObjPos] = useState<[number, number, number]>([0.00, -0.60, -0.10]);
+  const [throatObjRot, setThroatObjRot] = useState<[number, number, number]>([0.30, 0.00, -0.00]);
 
   // Язык
   const [tonguePivotPos, setTonguePivotPos] = useState<[number, number, number]>([0, 0, 0]);
