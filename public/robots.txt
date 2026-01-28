@@ -1,0 +1,9 @@
+# Разрешаем индексацию только главной страницы
+User-agent: *
+Allow: /$
+Disallow: /doz3
+Disallow: /crm
+Disallow: /positioning
+
+# Указываем sitemap
+Sitemap: https://xrayhub.ru/sitemap.xml
