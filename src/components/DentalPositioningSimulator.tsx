@@ -398,27 +398,21 @@ export function DentalPositioningSimulator() {
               </>
             )}
 
-            {/* Датчик со встроенным светом */}
-            <group position={sensorPivotPos} rotation={sensorPivotRot} onClick={() => setSelectedObject('sensor')}>
-              {/* Оси в центре pivot датчика */}
-              {showAxes && <AxesHelper size={0.5} position={[0, 0, 0]} />}
+            {/* Датчик */}
+            <UniversalModel
+              modelUrl={MODEL_URLS.xraySensor}
+              pivotPosition={sensorPivotPos}
+              pivotRotation={sensorPivotRot}
+              objectPosition={sensorObjPos}
+              objectRotation={sensorObjRot}
+              showAxes={showAxes}
+              isSelected={selectedObject === 'sensor'}
+              onClick={() => setSelectedObject('sensor')}
+              label="Датчик"
+            />
 
-              {/* Модель датчика */}
-              <group position={sensorObjPos} rotation={sensorObjRot}>
-                <UniversalModel
-                  modelUrl={MODEL_URLS.xraySensor}
-                  pivotPosition={[0, 0, 0]}
-                  pivotRotation={[0, 0, 0]}
-                  objectPosition={[0, 0, 0]}
-                  objectRotation={[0, 0, 0]}
-                  showAxes={false}
-                  isSelected={selectedObject === 'sensor'}
-                  onClick={() => setSelectedObject('sensor')}
-                  label="Датчик"
-                />
-              </group>
-
-              {/* Свет относительно датчика */}
+            {/* Свет в системе с датчиком - pivot датчика */}
+            <group position={sensorPivotPos} rotation={sensorPivotRot}>
               <group
                 position={lightObjPos}
                 rotation={[
