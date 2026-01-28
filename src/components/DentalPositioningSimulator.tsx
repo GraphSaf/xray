@@ -244,8 +244,12 @@ export function DentalPositioningSimulator() {
   // Свет - система Pivot/Object как у остальных объектов
   const [lightPivotPos, setLightPivotPos] = useState<[number, number, number]>([0.00, 0.00, 0.00]);
   const [lightPivotRot, setLightPivotRot] = useState<[number, number, number]>([0, 0, 0]);
-  const [lightObjPos, setLightObjPos] = useState<[number, number, number]>([0.00, -0.20, 5.50]);
+  const [lightObjPos, setLightObjPos] = useState<[number, number, number]>([0.00, 0.00, 5.50]);
   const [lightObjRot, setLightObjRot] = useState<[number, number, number]>([0, 0, 0]);
+
+  // Бисектрисная методика
+  const [useBisectrixTechnique, setUseBisectrixTechnique] = useState(false);
+  const [bisectrixAngle, setBisectrixAngle] = useState(0.10);
   const [xrayLightIntensity, setXrayLightIntensity] = useState(220);
   const [xrayLightAngle, setXrayLightAngle] = useState(9);
   const [lightDistance, setLightDistance] = useState(10);
@@ -261,14 +265,14 @@ export function DentalPositioningSimulator() {
   const controlsRef = useRef<OrbitControlsType>(null);
   const xrayLightRef = useRef<THREE.SpotLight>(null);
 
-  // Обновляем направление SpotLight на сенсор
+  // Обновляем направление SpotLight - свет направлен на объект датчика
   React.useEffect(() => {
     if (xrayLightRef.current) {
-      // Свет направлен на позицию pivot сенсора
-      xrayLightRef.current.target.position.set(...sensorPivotPos);
+      // Свет направлен на позицию объекта сенсора (относительно pivot)
+      xrayLightRef.current.target.position.set(...sensorObjPos);
       xrayLightRef.current.target.updateMatrixWorld();
     }
-  }, [lightPivotPos, lightPivotRot, lightObjPos, lightObjRot, sensorPivotPos]);
+  }, [lightObjPos, lightObjRot, sensorObjPos, useBisectrixTechnique, bisectrixAngle]);
 
   const resetCamera = () => {
     if (controlsRef.current) {
@@ -306,31 +310,6 @@ export function DentalPositioningSimulator() {
             position={[-3, 4, -3]}
             intensity={1}
           />
-
-          {/* РЕНТГЕН-СВЕТ - Pivot/Object система */}
-          <group position={lightPivotPos} rotation={lightPivotRot}>
-            {/* Оси в центре pivot */}
-            {showAxes && <AxesHelper size={0.5} position={[0, 0, 0]} />}
-
-            <group position={lightObjPos} rotation={lightObjRot}>
-              <spotLight
-                ref={xrayLightRef}
-                angle={xrayLightAngle * Math.PI / 180}
-                penumbra={lightPenumbra}
-                intensity={xrayLightIntensity}
-                color="#E5FFE5"
-                distance={lightDistance}
-                decay={lightDecay}
-                castShadow
-                shadow-mapSize={[4096, 4096]}
-                shadow-bias={-0.00001}
-                shadow-camera-near={0.1}
-                shadow-camera-far={20}
-              />
-              {/* Визуализация света на уровне object */}
-              <LightVisualization showAxes={false} />
-            </group>
-          </group>
 
           {/* Объекты сцены */}
           <Suspense fallback={<LoadingPlaceholder />}>
@@ -419,18 +398,53 @@ export function DentalPositioningSimulator() {
               </>
             )}
 
-            {/* Датчик */}
-            <UniversalModel
-              modelUrl={MODEL_URLS.xraySensor}
-              pivotPosition={sensorPivotPos}
-              pivotRotation={sensorPivotRot}
-              objectPosition={sensorObjPos}
-              objectRotation={sensorObjRot}
-              showAxes={showAxes}
-              isSelected={selectedObject === 'sensor'}
-              onClick={() => setSelectedObject('sensor')}
-              label="Датчик"
-            />
+            {/* Датчик со встроенным светом */}
+            <group position={sensorPivotPos} rotation={sensorPivotRot} onClick={() => setSelectedObject('sensor')}>
+              {/* Оси в центре pivot датчика */}
+              {showAxes && <AxesHelper size={0.5} position={[0, 0, 0]} />}
+
+              {/* Модель датчика */}
+              <group position={sensorObjPos} rotation={sensorObjRot}>
+                <UniversalModel
+                  modelUrl={MODEL_URLS.xraySensor}
+                  pivotPosition={[0, 0, 0]}
+                  pivotRotation={[0, 0, 0]}
+                  objectPosition={[0, 0, 0]}
+                  objectRotation={[0, 0, 0]}
+                  showAxes={false}
+                  isSelected={selectedObject === 'sensor'}
+                  onClick={() => setSelectedObject('sensor')}
+                  label="Датчик"
+                />
+              </group>
+
+              {/* Свет относительно датчика */}
+              <group
+                position={lightObjPos}
+                rotation={[
+                  useBisectrixTechnique ? bisectrixAngle : lightObjRot[0],
+                  lightObjRot[1],
+                  lightObjRot[2]
+                ]}
+              >
+                <spotLight
+                  ref={xrayLightRef}
+                  angle={xrayLightAngle * Math.PI / 180}
+                  penumbra={lightPenumbra}
+                  intensity={xrayLightIntensity}
+                  color="#E5FFE5"
+                  distance={lightDistance}
+                  decay={lightDecay}
+                  castShadow
+                  shadow-mapSize={[4096, 4096]}
+                  shadow-bias={-0.00001}
+                  shadow-camera-near={0.1}
+                  shadow-camera-far={20}
+                />
+                {/* Визуализация света */}
+                <LightVisualization showAxes={false} />
+              </group>
+            </group>
           </Suspense>
         </Canvas>
       </div>
@@ -1075,6 +1089,36 @@ export function DentalPositioningSimulator() {
                 onChange={(e) => setLightDecay(parseFloat(e.target.value))}
                 className="w-full"
               />
+            </div>
+
+            {/* Бисектрисная методика */}
+            <div className="mb-3 p-3 bg-yellow-50 border border-yellow-200 rounded-xl">
+              <label className="flex items-center gap-2 cursor-pointer mb-2">
+                <input
+                  type="checkbox"
+                  checked={useBisectrixTechnique}
+                  onChange={(e) => setUseBisectrixTechnique(e.target.checked)}
+                  className="w-4 h-4"
+                />
+                <span className="text-sm font-semibold">Бисектрисная методика</span>
+              </label>
+
+              {useBisectrixTechnique && (
+                <div>
+                  <label className="text-xs font-semibold mb-1 block">
+                    Угол наклона: {bisectrixAngle.toFixed(2)} рад ({(bisectrixAngle * 180 / Math.PI).toFixed(1)}°)
+                  </label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="0.5"
+                    step="0.01"
+                    value={bisectrixAngle}
+                    onChange={(e) => setBisectrixAngle(parseFloat(e.target.value))}
+                    className="w-full"
+                  />
+                </div>
+              )}
             </div>
           </div>
         )}
