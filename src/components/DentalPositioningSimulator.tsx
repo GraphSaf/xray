@@ -215,7 +215,7 @@ export function DentalPositioningSimulator() {
   const [gumsUpperPivotPos, setGumsUpperPivotPos] = useState<[number, number, number]>([0, 0, 0]);
   const [gumsUpperPivotRot, setGumsUpperPivotRot] = useState<[number, number, number]>([0, 0, 0]);
   const [gumsUpperObjPos, setGumsUpperObjPos] = useState<[number, number, number]>([0, 0, 0]);
-  const [gumsUpperObjRot, setGumsUpperObjRot] = useState<[number, number, number]>([0, 0, 0]);
+  const [gumsUpperObjRot, setGumsUpperObjRot] = useState<[number, number, number]>([-0.10, 0.00, 0.00]);
 
   // Нижние мягкие ткани
   const [gumsLowerPivotPos, setGumsLowerPivotPos] = useState<[number, number, number]>([0.00, 0.00, 0.00]);
@@ -260,7 +260,7 @@ export function DentalPositioningSimulator() {
   const [teethOpacity, setTeethOpacity] = useState(0.5);
 
   // Видимость мягких тканей и гортани
-  const [showSoftTissues, setShowSoftTissues] = useState(true);
+  const [showSoftTissues, setShowSoftTissues] = useState(false);
 
   const controlsRef = useRef<OrbitControlsType>(null);
   const xrayLightRef = useRef<THREE.SpotLight>(null);
