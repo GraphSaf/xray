@@ -242,9 +242,9 @@ export function DentalPositioningSimulator() {
   const [sensorObjRot, setSensorObjRot] = useState<[number, number, number]>([-0.82, 0.00, 0.00]);
 
   // Свет - система Pivot/Object как у остальных объектов
-  const [lightPivotPos, setLightPivotPos] = useState<[number, number, number]>([0, 0, 0]);
+  const [lightPivotPos, setLightPivotPos] = useState<[number, number, number]>([0.00, 0.00, 0.00]);
   const [lightPivotRot, setLightPivotRot] = useState<[number, number, number]>([0, 0, 0]);
-  const [lightObjPos, setLightObjPos] = useState<[number, number, number]>([0, 0, 0]);
+  const [lightObjPos, setLightObjPos] = useState<[number, number, number]>([0.00, -0.20, 5.50]);
   const [lightObjRot, setLightObjRot] = useState<[number, number, number]>([0, 0, 0]);
   const [xrayLightIntensity, setXrayLightIntensity] = useState(220);
   const [xrayLightAngle, setXrayLightAngle] = useState(9);
@@ -309,6 +309,9 @@ export function DentalPositioningSimulator() {
 
           {/* РЕНТГЕН-СВЕТ - Pivot/Object система */}
           <group position={lightPivotPos} rotation={lightPivotRot}>
+            {/* Оси в центре pivot */}
+            {showAxes && <AxesHelper size={0.5} position={[0, 0, 0]} />}
+
             <group position={lightObjPos} rotation={lightObjRot}>
               <spotLight
                 ref={xrayLightRef}
@@ -324,11 +327,9 @@ export function DentalPositioningSimulator() {
                 shadow-camera-near={0.1}
                 shadow-camera-far={20}
               />
-              {/* Визуализация света - только вектор */}
+              {/* Визуализация света на уровне object */}
               <LightVisualization showAxes={false} />
             </group>
-            {/* Оси в центре pivot */}
-            {showAxes && <AxesHelper size={0.5} position={[0, 0, 0]} />}
           </group>
 
           {/* Объекты сцены */}
